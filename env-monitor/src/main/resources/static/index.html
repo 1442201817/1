@@ -1,0 +1,1314 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<script>try{if(localStorage.getItem('envMonitorThemeLight')==='1')document.documentElement.classList.add('theme-light');}catch(e){}</script>
+<title>绿境·环境数据监测看板</title>
+<link rel="stylesheet" href="/lib/element-plus.css"/>
+<script src="/lib/vue.min.js" onerror="document.body.innerHTML='<div style=color:#ff5252;padding:40px;font-size:18px>❌ vue.min.js 加载失败，请刷新或检查服务是否运行</div>'"></script>
+<script src="/lib/element-plus.js" onerror="console.error('element-plus.js 加载失败')"></script>
+<script src="/lib/echarts.min.js" onerror="console.error('echarts.min.js 加载失败')"></script>
+<script src="/lib/axios.min.js" onerror="console.error('axios.min.js 加载失败')"></script>
+<style>
+:root{
+  --bg:#09141e;--bg2:#0f1e2d;--card:#132031;--card2:#172638;
+  --border:#1b3050;--border2:#234268;
+  --text:#cfe3f5;--text2:#5d8aaa;--text3:#2d5070;
+  --accent:#00f0c0;--blue:#00aaff;--purple:#9b6bff;
+  --warn:#ffb340;--danger:#ff4d4d;--green:#00e676;
+  --g1:linear-gradient(135deg,#00f0c0,#00aaff);
+  --g2:linear-gradient(135deg,#9b6bff,#d060f0);
+  --g3:linear-gradient(135deg,#ff6b35,#ff9800);
+  --sidebar:240px;
+}
+/* ═══ 浅色主题：白底 + 红 / 蓝点缀 ═══ */
+html.theme-light{
+  --bg:#eef2f8;--bg2:#ffffff;--card:#ffffff;--card2:#f8fafc;
+  --border:#e2e8f0;--border2:#cbd5e1;
+  --text:#0f172a;--text2:#475569;--text3:#94a3b8;
+  --accent:#dc2626;--blue:#2563eb;--purple:#6366f1;
+  --warn:#d97706;--danger:#b91c1c;--green:#15803d;
+  --g1:linear-gradient(135deg,#dc2626,#2563eb);
+  --g2:linear-gradient(135deg,#4f46e5,#2563eb);
+  --g3:linear-gradient(135deg,#ea580c,#dc2626);
+  --sidebar:240px;
+}
+html.theme-light .sidebar{background:rgba(255,255,255,.98);border-right-color:var(--border);box-shadow:4px 0 24px rgba(15,23,42,.05)}
+html.theme-light .topbar{background:rgba(255,255,255,.94);border-bottom-color:var(--border);backdrop-filter:blur(10px)}
+html.theme-light .logo h1{color:var(--accent)}
+html.theme-light .nav-item:hover{background:rgba(37,99,235,.07);color:var(--text)}
+html.theme-light .nav-item.active{background:rgba(220,38,38,.09);color:var(--accent);border-left-color:var(--accent)}
+html.theme-light .nav-item.active .nav-icon{filter:drop-shadow(0 0 5px rgba(220,38,38,.35))}
+html.theme-light .refresh-btn{background:rgba(37,99,235,.08);border-color:rgba(37,99,235,.22);color:var(--blue)}
+html.theme-light .refresh-btn:hover{background:rgba(37,99,235,.14)}
+html.theme-light .hero{background:linear-gradient(135deg,#ffffff 0%,#f0f6ff 45%,#fff5f5 100%);border-color:var(--border2)}
+html.theme-light .hero::before{background:radial-gradient(circle,rgba(37,99,235,.14),transparent 72%)}
+html.theme-light .prog-track{background:rgba(37,99,235,.1)}
+html.theme-light .kpi-card:hover{box-shadow:0 10px 36px rgba(37,99,235,.12)}
+html.theme-light .chart-card::before{opacity:.9;background:linear-gradient(90deg,var(--accent),var(--blue))}
+html.theme-light .bigscreen{background:var(--bg)}
+html.theme-light .bs-title{border-bottom-color:var(--border);background:linear-gradient(180deg,#fff,transparent)}
+html.theme-light .bs-title h2{background:linear-gradient(90deg,#dc2626,#2563eb);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+html.theme-light .bs-kpi{background:var(--card);border-color:var(--border);box-shadow:0 2px 12px rgba(15,23,42,.04)}
+html.theme-light .modal-overlay{background:rgba(15,23,42,.45)}
+html.theme-light .modal-box{box-shadow:0 24px 64px rgba(15,23,42,.12)}
+html.theme-light .data-table th{background:#f1f5f9;color:var(--text2);border-bottom-color:var(--border)}
+html.theme-light .data-table td{border-bottom-color:var(--border)}
+html.theme-light .data-table tr:hover td{background:rgba(37,99,235,.05)}
+html.theme-light .sc-m{background:rgba(37,99,235,.06)}
+html.theme-light .ai-data-card h3{color:var(--blue)}
+html.theme-light .advice-btn,html.theme-light .send-btn{color:#fff!important}
+html.theme-light .advice-btn{background:var(--g1)}
+html.theme-light .send-btn{background:var(--g1)}
+html.theme-light .msg.ai .msg-bubble{background:var(--card2);border-color:var(--border)}
+html.theme-light .msg.user .msg-bubble{background:rgba(37,99,235,.1);border-color:rgba(37,99,235,.25)}
+html.theme-light .chip{background:rgba(37,99,235,.08);color:var(--blue);border-color:rgba(37,99,235,.18)}
+html.theme-light #particles{opacity:.12!important}
+.theme-toggle-btn{background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.28);color:var(--blue);
+  padding:5px 12px;border-radius:7px;font-size:12px;cursor:pointer;transition:all .2s;white-space:nowrap;font-weight:600}
+.theme-toggle-btn:hover{background:rgba(37,99,235,.16)}
+html.theme-light .theme-toggle-btn{background:rgba(220,38,38,.08);border-color:rgba(220,38,38,.25);color:var(--accent)}
+html.theme-light .theme-toggle-btn:hover{background:rgba(220,38,38,.14)}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;display:flex;height:100vh}
+#app{display:flex;flex:1;width:100%;height:100%;overflow:hidden}
+#particles{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.3}
+
+/* ═══ Sidebar ═══ */
+.sidebar{width:var(--sidebar);min-width:var(--sidebar);background:rgba(15,30,45,.97);
+  border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:20;height:100vh;overflow:hidden}
+.logo{padding:20px 18px 16px;border-bottom:1px solid var(--border)}
+.logo-brand{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.logo-icon{width:36px;height:36px;border-radius:10px;background:var(--g1);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.logo h1{font-size:16px;font-weight:800;color:var(--accent);letter-spacing:1.5px}
+.logo p{font-size:10px;color:var(--text3);margin-top:2px;padding-left:2px}
+.nav-sec{padding:14px 18px 4px;font-size:9.5px;color:var(--text3);letter-spacing:2px;font-weight:700;text-transform:uppercase}
+.nav-item{display:flex;align-items:center;gap:10px;padding:11px 18px;cursor:pointer;
+  color:var(--text2);font-size:13px;border-left:3px solid transparent;transition:all .18s;user-select:none;position:relative}
+.nav-item:hover{background:rgba(0,240,192,.05);color:var(--text)}
+.nav-item.active{background:rgba(0,240,192,.09);color:var(--accent);border-left-color:var(--accent)}
+.nav-item.active .nav-icon{filter:drop-shadow(0 0 6px var(--accent))}
+.nav-icon{font-size:16px;width:20px;text-align:center;flex-shrink:0}
+.nav-badge{margin-left:auto;background:var(--danger);color:#fff;font-size:10px;padding:1px 7px;border-radius:10px}
+.nav-new{margin-left:auto;background:rgba(0,240,192,.15);color:var(--accent);font-size:9px;padding:1px 6px;border-radius:4px;font-weight:700;letter-spacing:.5px}
+.sidebar-foot{margin-top:auto;padding:12px 18px;border-top:1px solid var(--border);font-size:11px;color:var(--text2)}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);display:inline-block;margin-right:6px;animation:pulse 2s infinite}
+
+/* ═══ Main layout ═══ */
+.main{flex:1;display:flex;flex-direction:column;height:100vh;overflow:hidden;position:relative;z-index:1}
+.topbar{height:54px;background:rgba(15,30,45,.95);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 20px;gap:14px;flex-shrink:0;backdrop-filter:blur(8px)}
+.topbar-title{font-size:14px;font-weight:700;color:var(--text);flex:1}
+.station-sel{background:var(--card);border:1px solid var(--border2);color:var(--text);
+  padding:5px 10px;border-radius:7px;font-size:12px;cursor:pointer;outline:none}
+.refresh-btn{background:rgba(0,240,192,.08);border:1px solid rgba(0,240,192,.2);color:var(--accent);
+  padding:5px 14px;border-radius:7px;font-size:12px;cursor:pointer;transition:all .2s}
+.refresh-btn:hover{background:rgba(0,240,192,.16)}
+.clock{font-size:12px;color:var(--text2);font-variant-numeric:tabular-nums;white-space:nowrap}
+.content{flex:1;overflow-y:auto;overflow-x:hidden;padding:16px 20px 20px}
+
+/* ═══ Full-height pages ═══ */
+.page{display:flex;flex-direction:column;gap:14px;min-height:100%}
+
+/* ═══ Hero Banner (compact) ═══ */
+.hero{border-radius:14px;padding:18px 24px;position:relative;overflow:hidden;flex-shrink:0;
+  background:linear-gradient(135deg,#0a2a40 0%,#071e30 50%,#0d1a28 100%);border:1px solid var(--border2)}
+.hero::before{content:'';position:absolute;top:-50px;right:-30px;width:180px;height:180px;border-radius:50%;
+  background:radial-gradient(circle,rgba(0,240,192,.12),transparent 70%);pointer-events:none}
+.hero-inner{display:flex;align-items:center;gap:32px;flex-wrap:wrap}
+.hero-aqi{display:flex;align-items:flex-end;gap:14px}
+.hero-num{font-size:72px;font-weight:900;line-height:1;letter-spacing:-3px}
+.hero-aqi-info{padding-bottom:6px}
+.hero-aqi-lbl{font-size:11px;color:var(--text2);margin-bottom:5px}
+.hero-aqi-desc{font-size:12px;color:var(--text2);max-width:260px;line-height:1.6;margin-top:4px}
+.hero-divider{width:1px;height:60px;background:var(--border2);flex-shrink:0}
+.hero-metrics{display:flex;gap:24px;flex-wrap:wrap}
+.hero-m{text-align:center}
+.hero-m-val{font-size:20px;font-weight:700}
+.hero-m-lbl{font-size:10px;color:var(--text2);margin-top:2px}
+.hero-bars{flex:1;min-width:220px}
+.prog-row{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.prog-name{font-size:10px;color:var(--text2);width:40px;flex-shrink:0}
+.prog-track{flex:1;height:5px;border-radius:3px;background:rgba(255,255,255,.06)}
+.prog-fill{height:100%;border-radius:3px;transition:width 1.2s ease}
+.prog-val{font-size:10px;color:var(--text);width:50px;text-align:right;flex-shrink:0}
+
+/* ═══ KPI Grid ═══ */
+.kpi-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;flex-shrink:0}
+.kpi-card{border-radius:12px;padding:14px 16px;border:1px solid var(--border);background:var(--card);
+  position:relative;overflow:hidden;cursor:default;transition:transform .2s,box-shadow .2s}
+.kpi-card:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(0,0,0,.4)}
+.kpi-glow{position:absolute;top:-24px;right:-24px;width:80px;height:80px;border-radius:50%;opacity:.1;pointer-events:none}
+.kpi-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.kpi-icon{font-size:18px}
+.kpi-trend{font-size:10px;padding:1px 6px;border-radius:4px}
+.kpi-val{font-size:26px;font-weight:800;line-height:1;letter-spacing:-1px}
+.kpi-unit{font-size:10px;color:var(--text2);margin-left:3px;font-weight:400}
+.kpi-lbl{font-size:10px;color:var(--text2);margin-top:4px}
+.kpi-bar{height:3px;border-radius:2px;margin-top:10px;background:rgba(255,255,255,.05)}
+.kpi-bar-fill{height:100%;border-radius:2px;transition:width 1.2s}
+
+/* ═══ Chart layout ═══ */
+.charts-auto{flex:1;display:grid;gap:14px;min-height:0}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;
+  display:flex;flex-direction:column;position:relative;overflow:hidden;min-height:0}
+.chart-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--accent),var(--blue));opacity:.5}
+.chart-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-shrink:0}
+.chart-title{font-size:12.5px;color:var(--text2);font-weight:600;display:flex;align-items:center;gap:6px}
+.c-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.chart-body{flex:1;min-height:0}
+
+/* Two-row chart grids */
+.row2{display:grid;gap:14px}
+.row2.c3{grid-template-columns:240px 1fr 1fr}
+.row2.c13{grid-template-columns:1fr 3fr}
+.row2.c111{grid-template-columns:1fr 1fr 1fr}
+.row2.c11{grid-template-columns:1fr 1fr}
+.row2.c12{grid-template-columns:1fr 2fr}
+.row2.c1{grid-template-columns:1fr}
+
+/* ═══ Table ═══ */
+.data-table{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;flex-shrink:0}
+.data-table table{width:100%;border-collapse:collapse;font-size:12.5px}
+.data-table th{background:rgba(0,0,0,.25);padding:10px 14px;text-align:left;color:var(--text2);
+  font-weight:600;font-size:11px;border-bottom:1px solid var(--border);letter-spacing:.5px}
+.data-table td{padding:10px 14px;border-bottom:1px solid rgba(27,48,80,.5)}
+.data-table tr:last-child td{border-bottom:none}
+.data-table tr:hover td{background:rgba(0,240,192,.03)}
+.tbl-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px 10px}
+.tbl-title{font-size:12.5px;font-weight:600;color:var(--text2)}
+
+/* ═══ AQI Badge ═══ */
+.ab{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600;border:1px solid transparent}
+.ab-优{background:rgba(0,230,118,.15);color:#00e676;border-color:rgba(0,230,118,.25)}
+.ab-良{background:rgba(198,232,0,.12);color:#c6e800;border-color:rgba(198,232,0,.25)}
+.ab-轻度污染{background:rgba(255,140,66,.15);color:#ff8c42;border-color:rgba(255,140,66,.25)}
+.ab-中度污染{background:rgba(255,82,82,.15);color:#ff5252;border-color:rgba(255,82,82,.25)}
+.ab-重度污染{background:rgba(206,147,216,.12);color:#ce93d8;border-color:rgba(206,147,216,.25)}
+.ab-严重污染{background:rgba(255,138,128,.1);color:#ff8a80;border-color:rgba(255,138,128,.2)}
+
+/* ═══ AI Chat ═══ */
+.ai-layout{display:grid;grid-template-columns:260px 1fr;gap:14px;flex:1;min-height:0}
+.ai-left{display:flex;flex-direction:column;gap:12px;overflow-y:auto}
+.ai-data-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;flex-shrink:0}
+.ai-data-card h3{font-size:12.5px;color:var(--accent);margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.ai-stat{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(27,48,80,.5);font-size:12.5px}
+.ai-stat:last-child{border-bottom:none}
+.advice-btn{width:100%;margin-top:12px;background:var(--g1);border:none;border-radius:10px;
+  color:#061820;padding:11px;font-size:13px;cursor:pointer;font-weight:800;transition:opacity .2s}
+.advice-btn:hover{opacity:.85}
+.advice-btn:disabled{opacity:.4;cursor:not-allowed}
+.ai-tips{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;
+  font-size:12px;color:var(--text2);line-height:1.9;flex:1}
+.chat-panel{background:var(--card);border:1px solid var(--border);border-radius:14px;
+  display:flex;flex-direction:column;min-height:0}
+.chat-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-shrink:0}
+.chat-dot{width:7px;height:7px;background:var(--accent);border-radius:50%;animation:pulse 1.5s infinite}
+.chat-msgs{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;min-height:0}
+.msg{display:flex;gap:10px;max-width:88%}
+.msg.user{align-self:flex-end;flex-direction:row-reverse}
+.msg-av{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:16px;flex-shrink:0;border:1.5px solid var(--border2)}
+.msg.ai .msg-av{background:rgba(0,240,192,.1);border-color:rgba(0,240,192,.2)}
+.msg.user .msg-av{background:rgba(0,170,255,.1);border-color:rgba(0,170,255,.2)}
+.msg-bubble{padding:10px 14px;border-radius:13px;font-size:13px;line-height:1.7;white-space:pre-wrap;word-break:break-word}
+.msg.ai .msg-bubble{background:var(--bg2);border:1px solid var(--border);border-top-left-radius:4px}
+.msg.user .msg-bubble{background:rgba(0,170,255,.14);border:1px solid rgba(0,170,255,.2);border-top-right-radius:4px}
+.chat-foot{padding:12px 14px;border-top:1px solid var(--border);display:flex;gap:10px;flex-shrink:0}
+.chat-input{flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:9px;
+  color:var(--text);padding:9px 12px;font-size:13px;resize:none;outline:none;font-family:inherit;transition:border-color .2s}
+.chat-input:focus{border-color:var(--accent)}
+.send-btn{background:var(--g1);border:none;border-radius:9px;color:#061820;padding:9px 18px;
+  font-size:13px;cursor:pointer;font-weight:800;transition:opacity .2s;flex-shrink:0}
+.send-btn:disabled{opacity:.4;cursor:not-allowed}
+.typing span{display:inline-block;width:6px;height:6px;background:var(--accent);border-radius:50%;animation:bounce .9s infinite;margin:0 2px}
+.typing span:nth-child(2){animation-delay:.15s}
+.typing span:nth-child(3){animation-delay:.3s}
+
+/* ═══ Station cards ═══ */
+.station-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.sc{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;
+  position:relative;overflow:hidden;transition:transform .2s,box-shadow .2s}
+.sc:hover{transform:translateY(-3px);box-shadow:0 10px 32px rgba(0,0,0,.4)}
+.sc::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.sc-on::before{background:var(--g1)}.sc-off::before{background:var(--g3)}
+.sc-name{font-size:14px;font-weight:700}.sc-loc{font-size:11px;color:var(--text2);margin:4px 0 14px;display:flex;align-items:center;gap:3px}
+.sc-badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px}
+.badge-on{background:rgba(0,230,118,.15);color:#00e676;border:1px solid rgba(0,230,118,.25)}
+.badge-off{background:rgba(255,82,82,.15);color:#ff5252;border:1px solid rgba(255,82,82,.25)}
+.sc-metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.sc-m{background:rgba(0,0,0,.2);border-radius:8px;padding:10px;text-align:center}
+.sc-m-val{font-size:20px;font-weight:700}.sc-m-lbl{font-size:10px;color:var(--text2);margin-top:2px}
+.sc-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.chip{display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:20px;
+  font-size:11px;background:rgba(0,240,192,.08);color:var(--accent);border:1px solid rgba(0,240,192,.15)}
+
+/* ═══ Management CRUD ═══ */
+.mgmt-bar{display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.mgmt-bar .search-input{flex:1;max-width:280px;background:var(--card);border:1px solid var(--border2);color:var(--text);
+  padding:8px 14px;border-radius:8px;font-size:13px;outline:none;transition:border-color .2s}
+.mgmt-bar .search-input:focus{border-color:var(--accent)}
+.mgmt-bar .search-input::placeholder{color:var(--text3)}
+.btn-add{background:var(--g1);border:none;border-radius:8px;color:#061820;padding:8px 18px;
+  font-size:13px;cursor:pointer;font-weight:700;transition:opacity .2s;white-space:nowrap}
+.btn-add:hover{opacity:.85}
+.btn-sm{padding:4px 12px;border-radius:6px;font-size:12px;cursor:pointer;border:1px solid var(--border2);
+  background:transparent;color:var(--text2);transition:all .18s;white-space:nowrap}
+.btn-sm:hover{background:rgba(0,240,192,.1);color:var(--accent);border-color:var(--accent)}
+.btn-sm.danger{color:var(--danger);border-color:rgba(255,77,77,.3)}
+.btn-sm.danger:hover{background:rgba(255,77,77,.1);border-color:var(--danger)}
+.btn-sm.primary{color:var(--accent);border-color:rgba(0,240,192,.3)}
+.btn-sm.primary:hover{background:rgba(0,240,192,.1)}
+.tag{display:inline-block;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600;border:1px solid transparent}
+.tag-ok{background:rgba(0,230,118,.15);color:#00e676;border-color:rgba(0,230,118,.25)}
+.tag-warn{background:rgba(255,179,64,.15);color:var(--warn);border-color:rgba(255,179,64,.25)}
+.tag-danger{background:rgba(255,77,77,.15);color:var(--danger);border-color:rgba(255,77,77,.25)}
+.tag-off{background:rgba(93,138,170,.1);color:var(--text2);border-color:var(--border)}
+.tag-on{background:rgba(0,240,192,.12);color:var(--accent);border-color:rgba(0,240,192,.2)}
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:1000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.modal-box{background:var(--bg2);border:1px solid var(--border2);border-radius:16px;width:520px;max-width:95vw;max-height:90vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 24px 80px rgba(0,0,0,.6)}
+.modal-head{padding:18px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.modal-head h3{font-size:15px;font-weight:700;color:var(--text)}
+.modal-close{width:28px;height:28px;border-radius:6px;background:transparent;border:none;color:var(--text2);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .18s}
+.modal-close:hover{background:rgba(255,77,77,.15);color:var(--danger)}
+.modal-body{padding:20px;overflow-y:auto;flex:1}
+.modal-foot{padding:14px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px;flex-shrink:0}
+.form-row{display:flex;align-items:center;margin-bottom:14px}
+.form-row:last-child{margin-bottom:0}
+.form-label{width:90px;font-size:13px;color:var(--text2);flex-shrink:0}
+.form-label.req::after{content:'*';color:var(--danger);margin-left:3px}
+.form-input,.form-select,.form-textarea{flex:1;background:var(--card);border:1px solid var(--border2);color:var(--text);
+  padding:8px 12px;border-radius:8px;font-size:13px;outline:none;font-family:inherit;transition:border-color .2s}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--accent)}
+.form-textarea{resize:vertical;min-height:70px}
+.form-select option{background:var(--card)}
+.toggle-wrap{display:flex;align-items:center;gap:10px}
+.toggle{width:44px;height:24px;border-radius:12px;background:var(--border);border:none;cursor:pointer;
+  position:relative;transition:background .2s;outline:none;flex-shrink:0}
+.toggle.on{background:var(--accent)}
+.toggle::after{content:'';position:absolute;top:3px;left:3px;width:18px;height:18px;
+  border-radius:50%;background:#fff;transition:left .2s}
+.toggle.on::after{left:23px}
+.btn-cancel{background:transparent;border:1px solid var(--border2);color:var(--text2);padding:8px 20px;border-radius:8px;font-size:13px;cursor:pointer;transition:all .18s}
+.btn-cancel:hover{border-color:var(--accent);color:var(--accent)}
+.btn-save{background:var(--g1);border:none;border-radius:8px;color:#061820;padding:8px 24px;font-size:13px;cursor:pointer;font-weight:700;transition:opacity .2s}
+.btn-save:hover{opacity:.85}
+.stat-pills{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.stat-pill{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 18px;min-width:120px;text-align:center}
+.stat-pill-val{font-size:24px;font-weight:700}
+.stat-pill-lbl{font-size:11px;color:var(--text2);margin-top:3px}
+/* ═══ Alert ═══ */
+.alert-item{background:var(--card);border:1px solid var(--border);border-radius:12px;
+  padding:14px 18px;margin-bottom:10px;display:flex;align-items:center;gap:14px}
+.al-level{padding:3px 12px;border-radius:20px;font-size:11px;font-weight:700;flex-shrink:0}
+.al-warn{background:rgba(255,179,64,.15);color:var(--warn);border:1px solid rgba(255,179,64,.25)}
+.al-danger{background:rgba(255,77,77,.15);color:var(--danger);border:1px solid rgba(255,77,77,.25)}
+
+/* ═══ Big Screen Mode ═══ */
+.bigscreen{background:#050e17;min-height:100%;display:flex;flex-direction:column;gap:16px;padding:0}
+.bs-title{text-align:center;padding:12px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.bs-title h2{font-size:22px;font-weight:900;background:var(--g1);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:4px}
+.bs-grid{display:grid;grid-template-columns:1fr 1fr 1fr;grid-template-rows:auto auto;gap:14px;padding:0 16px 16px;flex:1}
+.bs-kpi-row{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;padding:0 16px}
+.bs-kpi{background:rgba(19,32,49,.8);border:1px solid var(--border2);border-radius:14px;padding:16px;text-align:center}
+.bs-kpi-val{font-size:36px;font-weight:900;letter-spacing:-2px}
+.bs-kpi-lbl{font-size:11px;color:var(--text2);margin-top:4px}
+
+/* ═══ Report Page ═══ */
+.report-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.report-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px}
+.report-card h3{font-size:13px;color:var(--text2);font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:6px}
+.stat-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid rgba(27,48,80,.5);font-size:13px}
+.stat-row:last-child{border-bottom:none}
+.stat-val{font-weight:700;font-size:16px}
+
+/* ═══ Comparison Page ═══ */
+.compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+
+/* ═══ History filter ═══ */
+.filter-bar{display:flex;gap:12px;align-items:center;flex-shrink:0;padding:2px 0}
+.filter-sel{background:var(--card);border:1px solid var(--border2);color:var(--text);
+  padding:6px 12px;border-radius:8px;font-size:12.5px;outline:none;cursor:pointer}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+
+/* Animations */
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes bounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-6px)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.fade-up{animation:fadeUp .35s ease both}
+</style>
+</head>
+<body>
+<canvas id="particles"></canvas>
+<!-- 加载提示，Vue挂载后自动隐藏 -->
+<div id="loading" style="position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9999;flex-direction:column;gap:16px">
+  <div style="font-size:40px">🌿</div>
+  <div style="color:var(--accent);font-size:18px;font-weight:700;letter-spacing:2px">绿境监测系统</div>
+  <div style="color:var(--text2);font-size:13px">正在加载数据...</div>
+  <div style="width:200px;height:3px;background:var(--border);border-radius:2px;overflow:hidden;margin-top:8px">
+    <div style="height:100%;background:linear-gradient(90deg,#00f0c0,#00aaff);border-radius:2px;animation:loading-bar 1.5s infinite" id="prog"></div>
+  </div>
+</div>
+<style>@keyframes loading-bar{0%{width:0;margin-left:0}50%{width:60%;margin-left:20%}100%{width:0;margin-left:100%}}</style>
+<div id="app">
+
+<!-- ═══ SIDEBAR ═══ -->
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-brand">
+      <div class="logo-icon">🌿</div>
+      <div><h1>绿境监测</h1></div>
+    </div>
+    <p>Environmental Intelligence Platform v2.0</p>
+  </div>
+  <div class="nav-sec">监测看板</div>
+  <div class="nav-item" :class="{active:page==='dashboard'}" @click="go('dashboard')">
+    <span class="nav-icon">📊</span>总览看板
+  </div>
+  <div class="nav-item" :class="{active:page==='bigscreen'}" @click="go('bigscreen')">
+    <span class="nav-icon">🖥️</span>大屏展示
+  </div>
+  <div class="nav-item" :class="{active:page==='compare'}" @click="go('compare')">
+    <span class="nav-icon">📡</span>实时对比
+  </div>
+  <div class="nav-sec">数据分析</div>
+  <div class="nav-item" :class="{active:page==='history'}" @click="go('history');loadHistory()">
+    <span class="nav-icon">📈</span>历史趋势
+  </div>
+  <div class="nav-item" :class="{active:page==='report'}" @click="go('report')">
+    <span class="nav-icon">📋</span>环境报告
+  </div>
+  <div class="nav-sec">智能功能</div>
+  <div class="nav-item" :class="{active:page==='ai'}" @click="go('ai')">
+    <span class="nav-icon">🤖</span>AI 顾问
+  </div>
+  <div class="nav-sec">系统管理</div>
+  <div v-if="currentUser.user.isAdmin" class="nav-item" :class="{active:page==='users'}" @click="go('users')">
+    <span class="nav-icon">👤</span>人员管理
+  </div>
+  <div class="nav-item" :class="{active:page==='rules'}" @click="go('rules')">
+    <span class="nav-icon">📏</span>指标管理
+  </div>
+  <div class="nav-item" :class="{active:page==='stations'}" @click="go('stations')">
+    <span class="nav-icon">🗺️</span>站点管理
+  </div>
+  <div class="nav-item" :class="{active:page==='alerts'}" @click="go('alerts')">
+    <span class="nav-icon">⚠️</span>告警记录
+    <span class="nav-badge" v-if="alerts.length">{{alerts.length}}</span>
+  </div>
+  <div class="sidebar-foot">
+    <div><span class="live-dot"></span>实时监测中 · 30秒刷新</div>
+    <div style="font-size:10px;color:var(--text3);margin-top:5px">© 2026 绿境环境科技</div>
+    <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+      <div v-if="currentUser.loggedIn" style="display:flex;align-items:center;gap:8px;font-size:12px">
+        <span style="color:var(--accent)">{{ currentUser.user.name }}</span>
+        <span class="tag" :class="currentUser.user.isAdmin ? 'tag-ok' : 'tag-on'" style="font-size:10px;padding:1px 6px">
+          {{ currentUser.user.role }}
+        </span>
+      </div>
+      <button v-if="!currentUser.loggedIn" class="btn-sm primary" @click="showLoginModal=true" style="width:100%;margin-top:8px">
+        🔑 登录
+      </button>
+      <button v-else class="btn-sm danger" @click="logout" style="width:100%;margin-top:8px">
+        🚪 退出
+      </button>
+    </div>
+  </div>
+</aside>
+
+<!-- ═══ MAIN ═══ -->
+<div class="main">
+  <div class="topbar">
+    <span class="topbar-title">{{ pageTitle }}</span>
+    <span style="font-size:12px;color:var(--text2)">当前站点：</span>
+    <select class="station-sel" v-model="selectedStation" @change="onStationChange">
+      <option v-for="s in stations" :key="s.id" :value="s.id">{{ s.name }}</option>
+    </select>
+    <button type="button" class="theme-toggle-btn" @click="toggleTheme" :title="themeLight ? '切换为深色界面' : '切换为浅色界面'">
+      {{ themeLight ? '🌙 深色' : '☀️ 浅色' }}
+    </button>
+    <button class="refresh-btn" @click="refresh">↻ 刷新</button>
+    <span class="clock">{{ clock }}</span>
+  </div>
+
+  <div class="content" ref="contentEl">
+
+  <!-- ══════════ 总览看板 ══════════ -->
+  <div v-show="page==='dashboard'" class="page fade-up">
+    <!-- Hero -->
+    <div class="hero">
+      <div class="hero-inner">
+        <div class="hero-aqi">
+          <div class="hero-num" :style="{color:aqiColor(current.aqi)}">{{current.aqi??'--'}}</div>
+          <div class="hero-aqi-info">
+            <div class="hero-aqi-lbl">AQI 综合指数</div>
+            <span class="ab" :class="'ab-'+(current.aqiLevel||'')">{{current.aqiLevel??'加载中'}}</span>
+            <div class="hero-aqi-desc">{{aqiAdvice(current.aqi)}}</div>
+          </div>
+        </div>
+        <div class="hero-divider"></div>
+        <div class="hero-metrics">
+          <div class="hero-m"><div class="hero-m-val" style="color:#00bcd4">{{current.pm25??'--'}}</div><div class="hero-m-lbl">PM2.5 μg/m³</div></div>
+          <div class="hero-m"><div class="hero-m-val" style="color:#ab47bc">{{current.pm10??'--'}}</div><div class="hero-m-lbl">PM10 μg/m³</div></div>
+          <div class="hero-m"><div class="hero-m-val" style="color:#ff7043">{{current.temperature??'--'}}℃</div><div class="hero-m-lbl">温度</div></div>
+          <div class="hero-m"><div class="hero-m-val" style="color:#42a5f5">{{current.humidity??'--'}}%</div><div class="hero-m-lbl">湿度</div></div>
+          <div class="hero-m"><div class="hero-m-val" style="color:#66bb6a">{{current.co??'--'}}</div><div class="hero-m-lbl">CO mg/m³</div></div>
+          <div class="hero-m"><div class="hero-m-val" style="color:#ffa726">{{current.windSpeed??'--'}}</div><div class="hero-m-lbl">{{current.windDirection??''}}风m/s</div></div>
+        </div>
+        <div class="hero-bars">
+          <div class="prog-row"><div class="prog-name">AQI</div><div class="prog-track"><div class="prog-fill" :style="{width:Math.min((current.aqi||0)/300*100,100)+'%',background:aqiColor(current.aqi)}"></div></div><div class="prog-val">{{current.aqi}}/300</div></div>
+          <div class="prog-row"><div class="prog-name">PM2.5</div><div class="prog-track"><div class="prog-fill" :style="{width:Math.min((current.pm25||0)/150*100,100)+'%',background:'#00bcd4'}"></div></div><div class="prog-val">{{current.pm25}}/150</div></div>
+          <div class="prog-row"><div class="prog-name">PM10</div><div class="prog-track"><div class="prog-fill" :style="{width:Math.min((current.pm10||0)/250*100,100)+'%',background:'#ab47bc'}"></div></div><div class="prog-val">{{current.pm10}}/250</div></div>
+          <div class="prog-row"><div class="prog-name">CO</div><div class="prog-track"><div class="prog-fill" :style="{width:Math.min((current.co||0)/5*100,100)+'%',background:'#66bb6a'}"></div></div><div class="prog-val">{{current.co}}/5</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- KPI 6-grid -->
+    <div class="kpi-grid">
+      <div class="kpi-card" style="border-top:2px solid #00f0c0">
+        <div class="kpi-glow" style="background:radial-gradient(#00f0c0,transparent)"></div>
+        <div class="kpi-top"><span class="kpi-icon">🌬️</span><span class="kpi-trend" style="background:rgba(0,240,192,.12);color:#00f0c0">AQI</span></div>
+        <div class="kpi-val" :style="{color:aqiColor(current.aqi)}">{{current.aqi??'--'}}</div>
+        <div class="kpi-lbl">空气质量指数</div>
+        <div class="kpi-bar"><div class="kpi-bar-fill" :style="{width:Math.min((current.aqi||0)/300*100,100)+'%',background:'#00f0c0'}"></div></div>
+      </div>
+      <div class="kpi-card" style="border-top:2px solid #00bcd4">
+        <div class="kpi-glow" style="background:radial-gradient(#00bcd4,transparent)"></div>
+        <div class="kpi-top"><span class="kpi-icon">🔵</span><span class="kpi-trend" style="background:rgba(0,188,212,.12);color:#00bcd4">μg/m³</span></div>
+        <div class="kpi-val" style="color:#00bcd4">{{current.pm25??'--'}}</div>
+        <div class="kpi-lbl">细颗粒物 PM2.5</div>
+        <div class="kpi-bar"><div class="kpi-bar-fill" :style="{width:Math.min((current.pm25||0)/150*100,100)+'%',background:'#00bcd4'}"></div></div>
+      </div>
+      <div class="kpi-card" style="border-top:2px solid #ab47bc">
+        <div class="kpi-glow" style="background:radial-gradient(#ab47bc,transparent)"></div>
+        <div class="kpi-top"><span class="kpi-icon">🟣</span><span class="kpi-trend" style="background:rgba(171,71,188,.12);color:#ab47bc">μg/m³</span></div>
+        <div class="kpi-val" style="color:#ab47bc">{{current.pm10??'--'}}</div>
+        <div class="kpi-lbl">可吸入颗粒 PM10</div>
+        <div class="kpi-bar"><div class="kpi-bar-fill" :style="{width:Math.min((current.pm10||0)/250*100,100)+'%',background:'#ab47bc'}"></div></div>
+      </div>
+      <div class="kpi-card" style="border-top:2px solid #ff7043">
+        <div class="kpi-glow" style="background:radial-gradient(#ff7043,transparent)"></div>
+        <div class="kpi-top"><span class="kpi-icon">🌡️</span><span class="kpi-trend" style="background:rgba(255,112,67,.12);color:#ff7043">℃</span></div>
+        <div class="kpi-val" style="color:#ff7043">{{current.temperature??'--'}}</div>
+        <div class="kpi-lbl">环境温度 / 湿度{{current.humidity}}%</div>
+        <div class="kpi-bar"><div class="kpi-bar-fill" :style="{width:Math.min(((current.temperature||0)+10)/55*100,100)+'%',background:'#ff7043'}"></div></div>
+      </div>
+      <div class="kpi-card" style="border-top:2px solid #66bb6a">
+        <div class="kpi-glow" style="background:radial-gradient(#66bb6a,transparent)"></div>
+        <div class="kpi-top"><span class="kpi-icon">☁️</span><span class="kpi-trend" style="background:rgba(102,187,106,.12);color:#66bb6a">mg/m³</span></div>
+        <div class="kpi-val" style="color:#66bb6a">{{current.co??'--'}}</div>
+        <div class="kpi-lbl">一氧化碳 CO</div>
+        <div class="kpi-bar"><div class="kpi-bar-fill" :style="{width:Math.min((current.co||0)/5*100,100)+'%',background:'#66bb6a'}"></div></div>
+      </div>
+      <div class="kpi-card" style="border-top:2px solid #ffa726">
+        <div class="kpi-glow" style="background:radial-gradient(#ffa726,transparent)"></div>
+        <div class="kpi-top"><span class="kpi-icon">💨</span><span class="kpi-trend" style="background:rgba(255,167,38,.12);color:#ffa726">m/s</span></div>
+        <div class="kpi-val" style="color:#ffa726">{{current.windSpeed??'--'}}</div>
+        <div class="kpi-lbl">风速 · {{current.windDirection??'--'}}风</div>
+        <div class="kpi-bar"><div class="kpi-bar-fill" :style="{width:Math.min((current.windSpeed||0)/15*100,100)+'%',background:'#ffa726'}"></div></div>
+      </div>
+    </div>
+
+    <!-- Charts Row 1 -->
+    <div class="row2 c3" style="flex:1;min-height:240px">
+      <div class="chart-card">
+        <div class="chart-head"><span class="chart-title"><span class="c-dot" style="background:#00f0c0"></span>AQI 仪表盘</span></div>
+        <div class="chart-body" id="gaugeChart"></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-head"><span class="chart-title"><span class="c-dot" style="background:#00aaff"></span>24小时 AQI / PM2.5 趋势</span></div>
+        <div class="chart-body" id="trendChart"></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-head"><span class="chart-title"><span class="c-dot" style="background:#9b6bff"></span>污染物雷达图</span></div>
+        <div class="chart-body" id="radarChart"></div>
+      </div>
+    </div>
+
+    <!-- Charts Row 2 -->
+    <div class="row2 c111" style="flex:1;min-height:220px">
+      <div class="chart-card">
+        <div class="chart-head"><span class="chart-title"><span class="c-dot" style="background:#ff7043"></span>各站点 AQI 对比</span></div>
+        <div class="chart-body" id="stationBar"></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-head"><span class="chart-title"><span class="c-dot" style="background:#ffa726"></span>温度 & 湿度走势</span></div>
+        <div class="chart-body" id="tempHumChart"></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-head"><span class="chart-title"><span class="c-dot" style="background:#66bb6a"></span>AQI 等级占比</span></div>
+        <div class="chart-body" id="pieChart"></div>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="data-table">
+      <div class="tbl-head"><span class="tbl-title">🏙️ 各监测站实时数据</span><span style="font-size:11px;color:var(--text2)">共{{overview.length}}个站点</span></div>
+      <table>
+        <thead><tr><th>站点</th><th>AQI</th><th>等级</th><th>PM2.5</th><th>PM10</th><th>CO</th><th>温度</th><th>湿度</th><th>风速</th><th>更新</th></tr></thead>
+        <tbody>
+          <tr v-for="s in overview" :key="s.stationId">
+            <td style="font-weight:600">{{s.stationName}}</td>
+            <td><b :style="{color:aqiColor(s.aqi),fontSize:'15px'}">{{s.aqi}}</b></td>
+            <td><span class="ab" :class="'ab-'+s.aqiLevel">{{s.aqiLevel}}</span></td>
+            <td style="color:#00bcd4">{{s.pm25}}</td>
+            <td style="color:#ab47bc">{{s.pm10}}</td>
+            <td style="color:#66bb6a">{{s.co}}</td>
+            <td style="color:#ff7043">{{s.temperature}}℃</td>
+            <td style="color:#42a5f5">{{s.humidity}}%</td>
+            <td style="color:#ffa726">{{s.windSpeed}}m/s</td>
+            <td style="font-size:11px;color:var(--text2)">{{s.recordedAt?.substring(11,16)}}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══════════ 大屏展示 ══════════ -->
+  <div v-show="page==='bigscreen'" class="bigscreen fade-up">
+    <div class="bs-title">
+      <span style="font-size:12px;color:var(--text2)">{{clock}}</span>
+      <h2>🌿 绿境·环境数据监测大屏</h2>
+      <span style="font-size:12px;color:var(--text2)">{{stationName}}</span>
+    </div>
+    <div class="bs-kpi-row">
+      <div class="bs-kpi" v-for="(item,i) in bsKpis" :key="i">
+        <div class="bs-kpi-val" :style="{color:item.color}">{{item.val}}</div>
+        <div class="bs-kpi-lbl">{{item.lbl}}</div>
+      </div>
+    </div>
+    <div class="bs-grid">
+      <div class="chart-card"><div class="chart-head"><span class="chart-title"><span class="c-dot" style="background:#00f0c0"></span>AQI 仪表盘</span></div><div class="chart-body" id="bsGauge"></div></div>
+      <div class="chart-card" style="grid-column:span 2"><div class="chart-head"><span class="chart-title"><span class="c-dot" style="background:#00aaff"></span>24小时 AQI 趋势</span></div><div class="chart-body" id="bsTrend"></div></div>
+      <div class="chart-card"><div class="chart-head"><span class="chart-title"><span class="c-dot" style="background:#9b6bff"></span>污染物雷达</span></div><div class="chart-body" id="bsRadar"></div></div>
+      <div class="chart-card"><div class="chart-head"><span class="chart-title"><span class="c-dot" style="background:#ff7043"></span>站点对比</span></div><div class="chart-body" id="bsBar"></div></div>
+      <div class="chart-card"><div class="chart-head"><span class="chart-title"><span class="c-dot" style="background:#66bb6a"></span>等级分布</span></div><div class="chart-body" id="bsPie"></div></div>
+    </div>
+  </div>
+
+  <!-- ══════════ 实时对比 ══════════ -->
+  <div v-show="page==='compare'" class="page fade-up">
+    <div class="row2 c1" style="flex-shrink:0">
+      <div class="chart-card" style="min-height:300px">
+        <div class="chart-head"><span class="chart-title"><span class="c-dot" style="background:#00f0c0"></span>各站点 AQI 实时对比（折线）</span></div>
+        <div class="chart-body" id="compareAqi"></div>
+      </div>
+    </div>
+    <div class="compare-grid" style="flex:1;min-height:0">
+      <div class="chart-card">
+        <div class="chart-head"><span class="chart-title"><span class="c-dot" style="background:#00bcd4"></span>各站点 PM2.5 对比</span></div>
+        <div class="chart-body" id="comparePm25"></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-head"><span class="chart-title"><span class="c-dot" style="background:#ff7043"></span>各站点温度对比</span></div>
+        <div class="chart-body" id="compareTemp"></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-head"><span class="chart-title"><span class="c-dot" style="background:#66bb6a"></span>各站点 CO 对比</span></div>
+        <div class="chart-body" id="compareCo2"></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-head"><span class="chart-title"><span class="c-dot" style="background:#42a5f5"></span>各站点湿度对比</span></div>
+        <div class="chart-body" id="compareHum"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ 历史趋势 ══════════ -->
+  <div v-show="page==='history'" class="page fade-up">
+    <div class="filter-bar">
+      <span style="font-size:12.5px;color:var(--text2)">时间范围：</span>
+      <select class="filter-sel" v-model="historyHours" @change="loadHistory">
+        <option value="6">最近6小时</option><option value="12">最近12小时</option>
+        <option value="24">最近24小时</option><option value="48">最近48小时</option>
+      </select>
+    </div>
+    <div class="row2 c1" style="flex:1.2;min-height:260px">
+      <div class="chart-card">
+        <div class="chart-head"><span class="chart-title"><span class="c-dot" style="background:#00f0c0"></span>AQI / PM2.5 / PM10 历史趋势</span></div>
+        <div class="chart-body" id="histAqi"></div>
+      </div>
+    </div>
+    <div class="row2 c11" style="flex:1;min-height:220px">
+      <div class="chart-card">
+        <div class="chart-head"><span class="chart-title"><span class="c-dot" style="background:#ff7043"></span>温度历史</span></div>
+        <div class="chart-body" id="histTemp"></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-head"><span class="chart-title"><span class="c-dot" style="background:#42a5f5"></span>湿度历史</span></div>
+        <div class="chart-body" id="histHum"></div>
+      </div>
+    </div>
+    <div class="data-table">
+      <div class="tbl-head"><span class="tbl-title">📋 历史数据记录（最近50条）</span></div>
+      <table>
+        <thead><tr><th>时间</th><th>AQI</th><th>等级</th><th>PM2.5</th><th>PM10</th><th>温度</th><th>湿度</th><th>CO</th></tr></thead>
+        <tbody>
+          <tr v-for="(r,i) in historyData.slice().reverse().slice(0,50)" :key="i">
+            <td style="font-size:11px;color:var(--text2)">{{r.time}}</td>
+            <td><b :style="{color:aqiColor(r.aqi)}">{{r.aqi}}</b></td>
+            <td><span class="ab" :class="'ab-'+aqiLvl(r.aqi)">{{aqiLvl(r.aqi)}}</span></td>
+            <td style="color:#00bcd4">{{r.pm25}}</td><td style="color:#ab47bc">{{r.pm10}}</td>
+            <td style="color:#ff7043">{{r.temperature}}℃</td><td style="color:#42a5f5">{{r.humidity}}%</td>
+            <td style="color:#66bb6a">{{r.co}}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══════════ 环境报告 ══════════ -->
+  <div v-show="page==='report'" class="page fade-up">
+    <div class="report-grid">
+      <div class="report-card">
+        <h3>📊 今日空气质量统计</h3>
+        <div class="stat-row"><span style="color:var(--text2)">最优 AQI</span><span class="stat-val" :style="{color:aqiColor(reportStats.minAqi)}">{{reportStats.minAqi}}</span></div>
+        <div class="stat-row"><span style="color:var(--text2)">最差 AQI</span><span class="stat-val" :style="{color:aqiColor(reportStats.maxAqi)}">{{reportStats.maxAqi}}</span></div>
+        <div class="stat-row"><span style="color:var(--text2)">平均 AQI</span><span class="stat-val" :style="{color:aqiColor(reportStats.avgAqi)}">{{reportStats.avgAqi}}</span></div>
+        <div class="stat-row"><span style="color:var(--text2)">超标次数（>100）</span><span class="stat-val" style="color:#ff4d4d">{{reportStats.exceed100}}次</span></div>
+        <div class="stat-row"><span style="color:var(--text2)">优良占比</span><span class="stat-val" style="color:#00e676">{{reportStats.goodRate}}%</span></div>
+        <div class="stat-row"><span style="color:var(--text2)">数据总条数</span><span class="stat-val" style="color:var(--accent)">{{reportStats.total}}条</span></div>
+      </div>
+      <div class="report-card">
+        <h3>🌡️ 气象数据汇总</h3>
+        <div class="stat-row"><span style="color:var(--text2)">平均温度</span><span class="stat-val" style="color:#ff7043">{{reportStats.avgTemp}}℃</span></div>
+        <div class="stat-row"><span style="color:var(--text2)">最高温度</span><span class="stat-val" style="color:#ff5252">{{reportStats.maxTemp}}℃</span></div>
+        <div class="stat-row"><span style="color:var(--text2)">最低温度</span><span class="stat-val" style="color:#42a5f5">{{reportStats.minTemp}}℃</span></div>
+        <div class="stat-row"><span style="color:var(--text2)">平均湿度</span><span class="stat-val" style="color:#42a5f5">{{reportStats.avgHum}}%</span></div>
+        <div class="stat-row"><span style="color:var(--text2)">平均 CO</span><span class="stat-val" style="color:#66bb6a">{{reportStats.avgCo}} mg/m³</span></div>
+        <div class="stat-row"><span style="color:var(--text2)">平均 PM2.5</span><span class="stat-val" style="color:#00bcd4">{{reportStats.avgPm25}} μg/m³</span></div>
+      </div>
+      <div class="report-card" style="grid-column:span 2">
+        <h3>🏙️ 各站点综合评分</h3>
+        <table style="width:100%;border-collapse:collapse;font-size:13px">
+          <thead><tr>
+            <th style="text-align:left;padding:8px 12px;color:var(--text2);border-bottom:1px solid var(--border);font-size:11px">站点</th>
+            <th style="text-align:center;padding:8px 12px;color:var(--text2);border-bottom:1px solid var(--border);font-size:11px">AQI</th>
+            <th style="text-align:center;padding:8px 12px;color:var(--text2);border-bottom:1px solid var(--border);font-size:11px">PM2.5</th>
+            <th style="text-align:center;padding:8px 12px;color:var(--text2);border-bottom:1px solid var(--border);font-size:11px">CO</th>
+            <th style="text-align:center;padding:8px 12px;color:var(--text2);border-bottom:1px solid var(--border);font-size:11px">综合评级</th>
+            <th style="text-align:center;padding:8px 12px;color:var(--text2);border-bottom:1px solid var(--border);font-size:11px">状态</th>
+          </tr></thead>
+          <tbody>
+            <tr v-for="s in overview" :key="s.stationId" style="border-bottom:1px solid rgba(27,48,80,.4)">
+              <td style="padding:10px 12px;font-weight:600">{{s.stationName}}</td>
+              <td style="text-align:center;padding:10px 12px"><b :style="{color:aqiColor(s.aqi)}">{{s.aqi}}</b></td>
+              <td style="text-align:center;padding:10px 12px;color:#00bcd4">{{s.pm25}}</td>
+              <td style="text-align:center;padding:10px 12px;color:#66bb6a">{{s.co}}</td>
+              <td style="text-align:center;padding:10px 12px"><span class="ab" :class="'ab-'+s.aqiLevel">{{s.aqiLevel}}</span></td>
+              <td style="text-align:center;padding:10px 12px"><span :style="{color:s.aqi<=100?'#00e676':'#ff4d4d'}">{{s.aqi<=100?'✅ 达标':'⚠️ 超标'}}</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="row2 c11" style="flex:1;min-height:260px;margin-top:0">
+      <div class="chart-card">
+        <div class="chart-head"><span class="chart-title"><span class="c-dot" style="background:#00f0c0"></span>24小时 AQI 趋势回顾</span></div>
+        <div class="chart-body" id="reportTrend"></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-head"><span class="chart-title"><span class="c-dot" style="background:#9b6bff"></span>站点 AQI 分布雷达</span></div>
+        <div class="chart-body" id="reportRadar"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ AI 顾问 ══════════ -->
+  <div v-show="page==='ai'" class="page fade-up" style="flex:1;min-height:0">
+    <div class="ai-layout" style="flex:1;min-height:0">
+      <div class="ai-left">
+        <div class="ai-data-card">
+          <h3>🌐 当前环境状况</h3>
+          <div class="ai-stat"><span style="color:var(--text2)">站点</span><b style="font-size:12px">{{stationName}}</b></div>
+          <div class="ai-stat"><span style="color:var(--text2)">AQI</span><b :style="{color:aqiColor(current.aqi)}">{{current.aqi}} · {{current.aqiLevel}}</b></div>
+          <div class="ai-stat"><span style="color:var(--text2)">PM2.5</span><b style="color:#00bcd4">{{current.pm25}} μg/m³</b></div>
+          <div class="ai-stat"><span style="color:var(--text2)">PM10</span><b style="color:#ab47bc">{{current.pm10}} μg/m³</b></div>
+          <div class="ai-stat"><span style="color:var(--text2)">温度</span><b style="color:#ff7043">{{current.temperature}}℃</b></div>
+          <div class="ai-stat"><span style="color:var(--text2)">湿度</span><b style="color:#42a5f5">{{current.humidity}}%</b></div>
+          <div class="ai-stat"><span style="color:var(--text2)">CO</span><b style="color:#66bb6a">{{current.co}} mg/m³</b></div>
+          <div class="ai-stat"><span style="color:var(--text2)">风</span><b style="color:#ffa726">{{current.windSpeed}}m/s {{current.windDirection}}</b></div>
+          <button class="advice-btn" @click="getAdvice" :disabled="aiLoading">{{aiLoading?'⏳ AI 分析中...':'🧭 一键生成出行建议'}}</button>
+        </div>
+        <div class="ai-tips">
+          <b style="color:var(--accent)">💡 你可以问我：</b><br>
+          • 今天适合户外跑步吗？<br>
+          • PM2.5 超过多少不宜外出？<br>
+          • AQI和PM2.5有什么区别？<br>
+          • 雾霾天怎么保护自己？<br>
+          • CO 浓度高有什么危害？<br>
+          • 口罩选N95还是KN95？<br>
+          • 空气净化器效果如何？
+        </div>
+      </div>
+      <div class="chat-panel">
+        <div class="chat-header">
+          <span class="chat-dot"></span>
+          <span style="font-size:14px;font-weight:700;color:var(--text)">绿境 AI 环境顾问</span>
+          <span style="margin-left:auto;display:flex;align-items:center;gap:8px">
+            <span v-if="chatHistorySize > 0" style="font-size:11px;color:var(--accent);background:rgba(0,240,192,.1);padding:2px 8px;border-radius:10px">💬 {{chatHistorySize}}/10</span>
+            <button @click="clearChatHistory" style="background:none;border:none;color:var(--text2);cursor:pointer;font-size:12px;padding:2px 6px;border-radius:4px" title="清除对话历史" onmouseover="this.style.background='rgba(255,82,82,.1)';this.style.color='#ff5252'" onmouseout="this.style.background='none';this.style.color='var(--text2)'">🗑️</button>
+            <span style="font-size:11px;color:var(--text2)">由 DeepSeek 大模型驱动</span>
+          </span>
+        </div>
+        <div class="chat-msgs" ref="chatMsgs">
+          <div v-for="(m,i) in chatMsgs" :key="i" class="msg" :class="m.role">
+            <div class="msg-av">{{m.role==='ai'?'🌿':'👤'}}</div>
+            <div class="msg-bubble">{{m.content}}</div>
+          </div>
+          <div v-if="aiLoading" class="msg ai"><div class="msg-av">🌿</div><div class="msg-bubble"><div class="typing"><span></span><span></span><span></span></div></div></div>
+        </div>
+        <div class="chat-foot">
+          <textarea class="chat-input" v-model="chatInput" rows="2" placeholder="输入问题，Enter 发送（Shift+Enter 换行）..." @keydown.enter.exact.prevent="sendChat"></textarea>
+          <button class="send-btn" @click="sendChat" :disabled="aiLoading||!chatInput.trim()">发送</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ 人员管理 ══════════ -->
+  <div v-show="page==='users'" class="page fade-up">
+    <div class="stat-pills">
+      <div class="stat-pill"><div class="stat-pill-val" style="color:var(--accent)">{{users.length}}</div><div class="stat-pill-lbl">总人数</div></div>
+      <div class="stat-pill"><div class="stat-pill-val" style="color:#00e676">{{users.filter(u=>u.status==='正常').length}}</div><div class="stat-pill-lbl">在职</div></div>
+      <div class="stat-pill"><div class="stat-pill-val" style="color:var(--danger)">{{users.filter(u=>u.status==='禁用').length}}</div><div class="stat-pill-lbl">禁用</div></div>
+      <div class="stat-pill"><div class="stat-pill-val" style="color:var(--blue)">{{[...new Set(users.map(u=>u.role))].length}}</div><div class="stat-pill-lbl">角色数</div></div>
+    </div>
+    <div class="mgmt-bar">
+      <input class="search-input" v-model="userKeyword" placeholder="🔍 搜索姓名 / 角色..." @input="loadUsers"/>
+      <select class="form-select" v-model="userRoleFilter" style="width:130px;flex:none" @change="filterUsers">
+        <option value="">全部角色</option>
+        <option v-for="r in userRoles" :key="r">{{r}}</option>
+      </select>
+      <button class="btn-add" @click="openUserForm()">＋ 新增人员</button>
+    </div>
+    <div class="data-table">
+      <table>
+        <thead><tr><th>ID</th><th>姓名</th><th>角色</th><th>电话</th><th>邮箱</th><th>状态</th><th>备注</th><th>创建时间</th><th>操作</th></tr></thead>
+        <tbody>
+          <tr v-for="u in filteredUsers" :key="u.id">
+            <td style="color:var(--text2)">{{u.id}}</td>
+            <td style="font-weight:600">{{u.name}}</td>
+            <td><span class="tag tag-on">{{u.role}}</span></td>
+            <td style="color:var(--text2)">{{u.phone}}</td>
+            <td style="color:var(--text2);font-size:12px">{{u.email}}</td>
+            <td><span class="tag" :class="u.status==='正常'?'tag-ok':'tag-off'">{{u.status}}</span></td>
+            <td style="font-size:12px;color:var(--text2);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{u.remark}}</td>
+            <td style="font-size:11px;color:var(--text2)">{{u.createTime?.substring(0,10)}}</td>
+            <td>
+              <button class="btn-sm primary" @click="openUserForm(u)" style="margin-right:6px">编辑</button>
+              <button class="btn-sm danger" @click="deleteUser(u.id)">删除</button>
+            </td>
+          </tr>
+          <tr v-if="!filteredUsers.length"><td colspan="9" style="text-align:center;padding:30px;color:var(--text2)">暂无数据</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <!-- User Form Modal -->
+    <div class="modal-overlay" v-if="userModal" @click.self="userModal=false">
+      <div class="modal-box">
+        <div class="modal-head">
+          <h3>{{userForm.id?'✏️ 编辑人员':'➕ 新增人员'}}</h3>
+          <button class="modal-close" @click="userModal=false">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-row"><span class="form-label req">姓名</span><input class="form-input" v-model="userForm.name" placeholder="请输入姓名"/></div>
+          <div class="form-row"><span class="form-label req">角色</span>
+            <select class="form-select" v-model="userForm.role">
+              <option v-for="r in userRoles" :key="r">{{r}}</option>
+            </select>
+          </div>
+          <div class="form-row"><span class="form-label">电话</span><input class="form-input" v-model="userForm.phone" placeholder="联系电话"/></div>
+          <div class="form-row"><span class="form-label">邮箱</span><input class="form-input" v-model="userForm.email" placeholder="电子邮箱"/></div>
+          <div class="form-row"><span class="form-label">状态</span>
+            <div class="toggle-wrap">
+              <button class="toggle" :class="{on:userForm.status==='正常'}" @click="userForm.status=userForm.status==='正常'?'禁用':'正常'"></button>
+              <span style="font-size:13px" :style="{color:userForm.status==='正常'?'#00e676':'var(--text2)'}">{{userForm.status}}</span>
+            </div>
+          </div>
+          <div class="form-row"><span class="form-label">备注</span><textarea class="form-textarea" v-model="userForm.remark" placeholder="备注信息..."></textarea></div>
+          <div class="form-row"><span class="form-label">账号</span><input class="form-input" v-model="userForm.username" placeholder="登录账号（可选）"/></div>
+          <div class="form-row"><span class="form-label">密码</span><input class="form-input" type="password" v-model="userForm.password" placeholder="登录密码（可选）"/></div>
+        </div>
+        <div class="modal-foot">
+          <button class="btn-cancel" @click="userModal=false">取消</button>
+          <button class="btn-save" @click="saveUser">保存</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ 指标管理 ══════════ -->
+  <div v-show="page==='rules'" class="page fade-up">
+    <div class="stat-pills">
+      <div class="stat-pill"><div class="stat-pill-val" style="color:var(--accent)">{{rules.length}}</div><div class="stat-pill-lbl">规则总数</div></div>
+      <div class="stat-pill"><div class="stat-pill-val" style="color:#00e676">{{rules.filter(r=>r.enabled).length}}</div><div class="stat-pill-lbl">已启用</div></div>
+      <div class="stat-pill"><div class="stat-pill-val" style="color:var(--danger)">{{rules.filter(r=>r.level==='严重').length}}</div><div class="stat-pill-lbl">严重规则</div></div>
+      <div class="stat-pill"><div class="stat-pill-val" style="color:var(--warn)">{{rules.filter(r=>r.level==='警告').length}}</div><div class="stat-pill-lbl">警告规则</div></div>
+    </div>
+    <div class="mgmt-bar">
+      <button v-if="currentUser.user.isAdmin" class="btn-add" @click="openRuleForm()">＋ 新增规则</button>
+    </div>
+    <div class="data-table">
+      <table>
+        <thead><tr><th>ID</th><th>监测指标</th><th>触发条件</th><th>阈值</th><th>告警等级</th><th>状态</th><th>描述</th><th>创建时间</th><th>操作</th></tr></thead>
+        <tbody>
+          <tr v-for="r in rules" :key="r.id">
+            <td style="color:var(--text2)">{{r.id}}</td>
+            <td style="font-weight:600;color:var(--accent)">{{r.metricName}}</td>
+            <td style="font-family:monospace;color:var(--blue)">{{r.metricName}} {{r.operator}} {{r.threshold}}</td>
+            <td style="font-weight:700" :style="{color:r.level==='严重'?'var(--danger)':'var(--warn)'}">{{r.threshold}}</td>
+            <td><span class="tag" :class="r.level==='严重'?'tag-danger':'tag-warn'">{{r.level}}</span></td>
+            <td>
+              <button v-if="currentUser.user.isAdmin" class="toggle" :class="{on:r.enabled}" @click="toggleRule(r)" style="transform:scale(.8)"></button>
+              <span v-if="currentUser.user.isAdmin" style="font-size:11px;margin-left:4px" :style="{color:r.enabled?'#00e676':'var(--text2)'}">{{r.enabled?'启用':'停用'}}</span>
+              <span v-else style="font-size:11px" :style="{color:r.enabled?'#00e676':'var(--text2)'}">{{r.enabled?'已启用':'已停用'}}</span>
+            </td>
+            <td style="font-size:12px;color:var(--text2);max-width:200px">{{r.description}}</td>
+            <td style="font-size:11px;color:var(--text2)">{{r.createTime?.substring(0,10)}}</td>
+            <td>
+              <button v-if="currentUser.user.isAdmin" class="btn-sm primary" @click="openRuleForm(r)" style="margin-right:6px">编辑</button>
+              <button v-if="currentUser.user.isAdmin" class="btn-sm danger" @click="deleteRule(r.id)">删除</button>
+              <span v-else style="color:var(--text2);font-size:12px">只读</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <!-- Rule Form Modal -->
+    <div class="modal-overlay" v-if="ruleModal" @click.self="ruleModal=false">
+      <div class="modal-box">
+        <div class="modal-head">
+          <h3>{{ruleForm.id?'✏️ 编辑规则':'➕ 新增告警规则'}}</h3>
+          <button class="modal-close" @click="ruleModal=false">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-row"><span class="form-label req">监测指标</span>
+            <select class="form-select" v-model="ruleForm.metricName">
+              <option>AQI</option><option>PM2.5</option><option>PM10</option>
+              <option>CO</option><option>温度</option><option>湿度</option><option>风速</option>
+            </select>
+          </div>
+          <div class="form-row"><span class="form-label req">触发条件</span>
+            <select class="form-select" v-model="ruleForm.operator" style="width:80px;flex:none;margin-right:10px">
+              <option>></option><option>>=</option><option>&lt;</option><option>&lt;=</option><option>==</option>
+            </select>
+            <input class="form-input" type="number" v-model.number="ruleForm.threshold" placeholder="阈值"/>
+          </div>
+          <div class="form-row"><span class="form-label req">告警等级</span>
+            <select class="form-select" v-model="ruleForm.level">
+              <option>警告</option><option>严重</option>
+            </select>
+          </div>
+          <div class="form-row"><span class="form-label">启用状态</span>
+            <div class="toggle-wrap">
+              <button class="toggle" :class="{on:ruleForm.enabled}" @click="ruleForm.enabled=!ruleForm.enabled"></button>
+              <span style="font-size:13px" :style="{color:ruleForm.enabled?'#00e676':'var(--text2)'}">{{ruleForm.enabled?'启用':'停用'}}</span>
+            </div>
+          </div>
+          <div class="form-row"><span class="form-label">描述</span><textarea class="form-textarea" v-model="ruleForm.description" placeholder="规则说明..."></textarea></div>
+        </div>
+        <div class="modal-foot">
+          <button class="btn-cancel" @click="ruleModal=false">取消</button>
+          <button class="btn-save" @click="saveRule">保存</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ 站点管理 ══════════ -->
+  <div v-show="page==='stations'" class="page fade-up">
+    <div class="stat-pills">
+      <div class="stat-pill"><div class="stat-pill-val" style="color:var(--accent)">{{stationList.length}}</div><div class="stat-pill-lbl">站点总数</div></div>
+      <div class="stat-pill"><div class="stat-pill-val" style="color:#00e676">{{stationList.filter(s=>s.status==='ONLINE').length}}</div><div class="stat-pill-lbl">在线</div></div>
+      <div class="stat-pill"><div class="stat-pill-val" style="color:var(--danger)">{{stationList.filter(s=>s.status!=='ONLINE').length}}</div><div class="stat-pill-lbl">离线/维护</div></div>
+    </div>
+    <div class="mgmt-bar">
+      <button v-if="currentUser.user.isAdmin" class="btn-add" @click="openStationForm()">＋ 新增站点</button>
+    </div>
+    <!-- Station Table -->
+    <div class="data-table" style="margin-bottom:16px">
+      <table>
+        <thead><tr><th>ID</th><th>站点名称</th><th>位置描述</th><th>纬度</th><th>经度</th><th>状态</th><th>当前AQI</th><th>PM2.5</th><th>温度</th><th>创建时间</th><th>操作</th></tr></thead>
+        <tbody>
+          <tr v-for="s in stationList" :key="s.id">
+            <td style="color:var(--text2)">{{s.id}}</td>
+            <td style="font-weight:600">{{s.name}}</td>
+            <td style="font-size:12px;color:var(--text2)">{{s.location}}</td>
+            <td style="font-size:12px;color:var(--text2)">{{s.lat}}</td>
+            <td style="font-size:12px;color:var(--text2)">{{s.lng}}</td>
+            <td><span class="tag" :class="s.status==='ONLINE'?'tag-ok':s.status==='MAINTENANCE'?'tag-warn':'tag-off'">
+              {{s.status==='ONLINE'?'在线':s.status==='MAINTENANCE'?'维护中':'离线'}}</span></td>
+            <td><b :style="{color:aqiColor(stationAqi(s.id))}">{{stationAqi(s.id)||'--'}}</b></td>
+            <td style="color:#00bcd4">{{stationPm25(s.id)||'--'}}</td>
+            <td style="color:#ff7043">{{stationTemp(s.id)||'--'}}{{stationTemp(s.id)?'℃':''}}</td>
+            <td style="font-size:11px;color:var(--text2)">{{s.createdAt?.substring(0,10)}}</td>
+            <td>
+              <button v-if="currentUser.user.isAdmin" class="btn-sm primary" @click="openStationForm(s)" style="margin-right:6px">编辑</button>
+              <button v-if="currentUser.user.isAdmin" class="btn-sm danger" @click="deleteStation(s.id)">删除</button>
+              <span v-else style="color:var(--text2);font-size:12px">只读</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <!-- Station Cards -->
+    <div class="station-grid">
+      <div class="sc" :class="s.status==='ONLINE'?'sc-on':'sc-off'" v-for="s in overview" :key="s.stationId">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div><div class="sc-name">{{s.stationName}}</div><div class="sc-loc">📍 {{s.location}}</div></div>
+          <span class="sc-badge" :class="s.status==='ONLINE'?'badge-on':'badge-off'">{{s.status==='ONLINE'?'● 在线':'○ 离线'}}</span>
+        </div>
+        <div class="sc-metrics">
+          <div class="sc-m"><div class="sc-m-val" :style="{color:aqiColor(s.aqi)}">{{s.aqi}}</div><div class="sc-m-lbl">AQI</div></div>
+          <div class="sc-m"><div class="sc-m-val" style="color:#00bcd4">{{s.pm25}}</div><div class="sc-m-lbl">PM2.5</div></div>
+          <div class="sc-m"><div class="sc-m-val" style="color:#ff7043">{{s.temperature}}℃</div><div class="sc-m-lbl">温度</div></div>
+          <div class="sc-m"><div class="sc-m-val" style="color:#42a5f5">{{s.humidity}}%</div><div class="sc-m-lbl">湿度</div></div>
+        </div>
+        <div class="sc-chips"><span class="chip">CO {{s.co}}</span><span class="chip">💨 {{s.windSpeed}}m/s {{s.windDirection}}</span></div>
+      </div>
+    </div>
+    <!-- Station Form Modal -->
+    <div class="modal-overlay" v-if="stationModal" @click.self="stationModal=false">
+      <div class="modal-box">
+        <div class="modal-head">
+          <h3>{{stationForm.id?'✏️ 编辑站点':'➕ 新增监测站点'}}</h3>
+          <button class="modal-close" @click="stationModal=false">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-row"><span class="form-label req">站点名称</span><input class="form-input" v-model="stationForm.name" placeholder="如：浦东新区监测站"/></div>
+          <div class="form-row"><span class="form-label req">位置描述</span><input class="form-input" v-model="stationForm.location" placeholder="详细位置描述"/></div>
+          <div class="form-row"><span class="form-label">纬度</span><input class="form-input" type="number" v-model.number="stationForm.lat" placeholder="如：31.2011"/></div>
+          <div class="form-row"><span class="form-label">经度</span><input class="form-input" type="number" v-model.number="stationForm.lng" placeholder="如：121.6047"/></div>
+          <div class="form-row"><span class="form-label">运行状态</span>
+            <select class="form-select" v-model="stationForm.status">
+              <option value="ONLINE">在线 (ONLINE)</option>
+              <option value="OFFLINE">离线 (OFFLINE)</option>
+              <option value="MAINTENANCE">维护中 (MAINTENANCE)</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-foot">
+          <button class="btn-cancel" @click="stationModal=false">取消</button>
+          <button class="btn-save" @click="saveStation">保存</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ 告警记录 ══════════ -->
+  <div v-show="page==='alerts'" class="fade-up">
+    <div v-if="!alerts.length" style="text-align:center;padding:80px;color:var(--text2)">
+      <div style="font-size:56px;margin-bottom:14px">✅</div>
+      <div style="font-size:16px;font-weight:600">所有站点空气质量良好</div>
+      <div style="font-size:13px;margin-top:8px;color:var(--text3)">暂无告警信息</div>
+    </div>
+    <div v-for="a in alerts" :key="a.stationId" class="alert-item">
+      <div style="font-size:24px">{{a.aqi>=200?'🔴':'🟠'}}</div>
+      <div style="flex:1">
+        <div style="font-size:14px;font-weight:600">{{a.stationName}} — AQI {{a.aqi}}（{{a.aqiLevel}}）</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:3px">PM2.5: {{a.pm25}} μg/m³ · {{a.time}}</div>
+      </div>
+      <span class="al-level" :class="a.aqi>=200?'al-danger':'al-warn'">{{a.aqi>=200?'严重':'警告'}}</span>
+    </div>
+  </div>
+
+  </div><!-- /content -->
+
+  <!-- ══════════ 登录弹窗 ══════════ -->
+  <div class="modal-overlay" v-if="showLoginModal" @click.self="showLoginModal=false">
+    <div class="modal-box" style="max-width:400px">
+      <div class="modal-head">
+        <h3>🔑 用户登录</h3>
+        <button class="modal-close" @click="showLoginModal=false">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row"><span class="form-label req">账号</span><input class="form-input" v-model="loginForm.username" placeholder="请输入账号" @keyup.enter="login"/></div>
+        <div class="form-row"><span class="form-label req">密码</span><input class="form-input" type="password" v-model="loginForm.password" placeholder="请输入密码" @keyup.enter="login"/></div>
+        <div v-if="loginError" style="color:var(--danger);font-size:13px;margin-top:8px;text-align:center">{{loginError}}</div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn-cancel" @click="showLoginModal=false">取消</button>
+        <button class="btn-save" @click="login" :disabled="loginLoading">{{loginLoading?'登录中...':'登录'}}</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+</div><!-- /app -->
+
+<script>
+// Particles
+(()=>{const c=document.getElementById('particles'),x=c.getContext('2d');let W,H,P=[];const rz=()=>{W=c.width=innerWidth;H=c.height=innerHeight;P=Array.from({length:55},()=>({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.4+.4,vx:(Math.random()-.5)*.25,vy:(Math.random()-.5)*.25,o:Math.random()*.35+.08}))};window.addEventListener('resize',rz);rz();const draw=()=>{x.clearRect(0,0,W,H);P.forEach(p=>{p.x+=p.vx;p.y+=p.vy;if(p.x<0||p.x>W)p.vx*=-1;if(p.y<0||p.y>H)p.vy*=-1;x.beginPath();x.arc(p.x,p.y,p.r,0,Math.PI*2);x.fillStyle=`rgba(0,240,192,${p.o})`;x.fill()});requestAnimationFrame(draw)};draw()})();
+
+const {createApp}=Vue;
+createApp({
+data(){return{
+  themeLight:false,page:'dashboard',clock:'',stations:[],selectedStation:1,
+  overview:[],current:{},historyData:[],historyHours:24,
+    chatMsgs:[{role:'ai',content:'你好！我是绿境AI 🌿\n\n我可以根据实时监测数据，为你提供个性化出行健康建议，解答空气质量相关问题。\n\n点击左侧「一键生成出行建议」或直接提问！'}],
+    chatInput:'',aiLoading:false,alerts:[],
+    sessionId:'session-' + Date.now(), // 生成唯一会话ID
+    chatHistorySize:0, // 当前会话历史记录数量
+    // 登录相关
+    currentUser:{loggedIn:false,user:{name:'游客',role:'游客',isAdmin:false}},
+    showLoginModal:false,loginForm:{username:'',password:''},loginError:'',loginLoading:false,
+    // 人员管理
+    users:[],userKeyword:'',userRoleFilter:'',
+    userRoles:['管理员','成员'],
+    userModal:false,
+    userForm:{id:null,name:'',role:'成员',phone:'',email:'',status:'正常',remark:'',username:'',password:''},
+    // 指标管理
+    rules:[],ruleModal:false,
+    ruleForm:{id:null,metricName:'AQI',operator:'>',threshold:100,level:'警告',enabled:true,description:''},
+    // 站点管理
+    stationList:[],stationModal:false,
+    stationForm:{id:null,name:'',location:'',lat:null,lng:null,status:'ONLINE'},
+  // charts
+  gc:null,tc:null,rc:null,sbc:null,thc:null,pic:null,
+  bsGc:null,bsTc:null,bsRc:null,bsBc:null,bsPic:null,
+  cmpAqi:null,cmpPm:null,cmpTemp:null,cmpCo2:null,cmpHum:null,
+  haqi:null,htemp:null,hhum:null,
+  rTrend:null,rRadar:null,
+  allTrends:{},
+}},
+  computed:{
+  pageTitle(){return{dashboard:'总览看板',bigscreen:'大屏展示',compare:'实时对比',history:'历史趋势',report:'环境报告',ai:'AI 顾问',users:'人员管理',rules:'指标管理',stations:'站点管理',alerts:'告警记录'}[this.page]||''},
+  stationName(){const s=this.stations.find(x=>x.id===this.selectedStation);return s?s.name:''},
+  filteredUsers(){
+    let list=this.users;
+    if(this.userRoleFilter)list=list.filter(u=>u.role===this.userRoleFilter);
+    return list;
+  },
+  bsKpis(){const c=this.current;return[{val:c.aqi??'--',lbl:'AQI 指数',color:this.aqiColor(c.aqi)},{val:c.pm25??'--',lbl:'PM2.5 μg/m³',color:'#00bcd4'},{val:c.pm10??'--',lbl:'PM10 μg/m³',color:'#ab47bc'},{val:(c.temperature??'--')+'℃',lbl:'环境温度',color:'#ff7043'},{val:(c.humidity??'--')+'%',lbl:'空气湿度',color:'#42a5f5'},{val:(c.co??'--')+' mg/m³',lbl:'CO浓度',color:'#66bb6a'}]},
+  reportStats(){
+    const d=this.historyData;
+    if(!d.length)return{minAqi:'--',maxAqi:'--',avgAqi:'--',exceed100:0,goodRate:0,total:0,avgTemp:'--',maxTemp:'--',minTemp:'--',avgHum:'--',avgCo:'--',avgPm25:'--'};
+    const aqis=d.map(x=>x.aqi),temps=d.map(x=>x.temperature),hums=d.map(x=>x.humidity),cos=d.map(x=>x.co),pm25s=d.map(x=>x.pm25);
+    const avg=arr=>Math.round(arr.reduce((a,b)=>a+b,0)/arr.length*10)/10;
+    return{minAqi:Math.min(...aqis),maxAqi:Math.max(...aqis),avgAqi:Math.round(avg(aqis)),exceed100:aqis.filter(x=>x>100).length,goodRate:Math.round(aqis.filter(x=>x<=100).length/aqis.length*100),total:d.length,avgTemp:avg(temps),maxTemp:Math.round(Math.max(...temps)*10)/10,minTemp:Math.round(Math.min(...temps)*10)/10,avgHum:avg(hums),avgCo:Math.round(avg(cos)),avgPm25:avg(pm25s)};
+  }
+},
+created(){
+  try{this.themeLight=localStorage.getItem('envMonitorThemeLight')==='1';document.documentElement.classList.toggle('theme-light',this.themeLight);}catch(e){}
+  this.$nextTick(()=>this.syncParticleOpacity());
+},
+mounted(){this.updateClock();setInterval(this.updateClock,1000);this.loadCurrentUser();this.loadStations();setInterval(this.refresh,30000);window.addEventListener('resize',this.rzAll);this.syncParticleOpacity()},
+methods:{
+  updateClock(){this.clock=new Date().toLocaleString('zh-CN',{hour12:false})},
+  // ── 登录相关 ──
+  async loadCurrentUser(){
+    try{
+      const r=await axios.get('/api/auth/current');
+      this.currentUser=r.data;
+    }catch(e){console.error('获取用户信息失败',e)}
+  },
+  async login(){
+    if(!this.loginForm.username.trim()||!this.loginForm.password.trim()){
+      this.loginError='请输入账号和密码';return;
+    }
+    this.loginLoading=true;this.loginError='';
+    try{
+      const r=await axios.post('/api/auth/login',this.loginForm);
+      if(r.data.success){
+        this.currentUser={loggedIn:true,user:r.data.user};
+        this.showLoginModal=false;
+        this.loginForm={username:'',password:''};
+        this.$message&&this.$message.success('登录成功');
+      }
+    }catch(e){
+      this.loginError=e.response?.data?.message||'登录失败，请检查账号密码';
+    }finally{this.loginLoading=false}
+  },
+  async logout(){
+    if(!confirm('确认退出登录？'))return;
+    try{
+      await axios.post('/api/auth/logout');
+      this.currentUser={loggedIn:false,user:{name:'游客',role:'游客',isAdmin:false}};
+      this.page='dashboard';
+      this.$message&&this.$message.success('已退出登录');
+    }catch(e){alert('退出失败')}
+  },
+  go(p){
+    // 人员管理页面仅管理员可见
+    if(p==='users' && !this.currentUser.user.isAdmin){
+      alert('无权访问，需要管理员权限');return;
+    }
+    
+    this.page=p;
+    if(p==='dashboard'){
+      this.$nextTick(async()=>{
+        this.destroyDashboardCharts();
+        await this.refresh();
+      });
+    }
+    if(p==='bigscreen'){
+      this.$nextTick(async()=>{
+        this.destroyBigScreenCharts();
+        await this.loadCurrent();
+        await this.loadOverview();
+        this.renderBigScreen();
+      });
+    }
+    if(p==='compare'){
+      this.$nextTick(async()=>{
+        this.destroyCompareCharts();
+        await this.renderCompare();
+      });
+    }
+    if(p==='report'){
+      this.$nextTick(async()=>{
+        await this.loadHistory();
+        this.destroyReportCharts();
+        this.renderReport();
+      });
+    }
+    if(p==='history'){
+      this.$nextTick(async()=>{
+        this.destroyHistoryCharts();
+        await this.loadHistory();
+      });
+    }
+    if(p==='users')this.loadUsers();
+    if(p==='rules')this.loadRules();
+    if(p==='stations')this.loadStationList();
+  },
+  async loadStations(){const r=await axios.get('/api/stations');this.stations=r.data;if(this.stations.length)this.selectedStation=this.stations[0].id;await this.refresh()},
+  async refresh(){await Promise.all([this.loadOverview(),this.loadCurrent(),this.loadTrend()]);this.buildAlerts()},
+  async loadOverview(){const r=await axios.get('/api/overview');this.overview=r.data;if(this.page==='dashboard')this.$nextTick(()=>{this.renderBar();this.renderPie()})},
+  async loadCurrent(){const r=await axios.get(`/api/stations/${this.selectedStation}/latest`);this.current=r.data;if(this.page==='dashboard')this.$nextTick(()=>this.renderGauge())},
+  async loadTrend(){const r=await axios.get(`/api/stations/${this.selectedStation}/trend?hours=24`);const d=r.data;if(this.page==='dashboard')this.$nextTick(()=>{this.renderTrend(d);this.renderTempHum(d);this.renderRadar()})},
+  async loadHistory(){const r=await axios.get(`/api/stations/${this.selectedStation}/trend?hours=${this.historyHours}`);this.historyData=r.data;this.$nextTick(()=>{this.renderHistAqi(r.data);this.renderHistTemp(r.data);this.renderHistHum(r.data)})},
+  async loadAllTrends(){const ps=this.stations.map(s=>axios.get(`/api/stations/${s.id}/trend?hours=24`).then(r=>({id:s.id,name:s.name,data:r.data})));this.allTrends={};(await Promise.all(ps)).forEach(x=>{this.allTrends[x.id]={name:x.name,data:x.data}})},
+  onStationChange(){this.refresh();if(this.page==='history')this.loadHistory()},
+  buildAlerts(){this.alerts=this.overview.filter(s=>s.aqi>100).map(s=>({...s,time:new Date().toLocaleString('zh-CN')}))},
+  async getAdvice(){this.aiLoading=true;try{const r=await axios.post('/api/ai/outing-advice',{stationId:this.selectedStation});this.chatMsgs.push({role:'user',content:'📍 请根据当前环境数据生成今日出行建议'});this.chatMsgs.push({role:'ai',content:r.data.advice});this.$nextTick(()=>this.scrollChat())}finally{this.aiLoading=false}},
+  async sendChat(){const msg=this.chatInput.trim();if(!msg||this.aiLoading)return;this.chatMsgs.push({role:'user',content:msg});this.chatInput='';this.aiLoading=true;this.$nextTick(()=>this.scrollChat());try{const r=await axios.post('/api/ai/chat',{message:msg,stationId:this.selectedStation,sessionId:this.sessionId});this.chatMsgs.push({role:'ai',content:r.data.response});this.chatHistorySize=r.data.historySize||0;this.$nextTick(()=>this.scrollChat())}finally{this.aiLoading=false}},
+  async clearChatHistory(){if(!confirm('确认清除所有对话历史？'))return;try{await axios.post('/api/ai/clear-history',{sessionId:this.sessionId});this.chatMsgs=[{role:'ai',content:'对话历史已清除 🌿\n\n我们可以重新开始对话了！'}];this.chatHistorySize=0}catch(e){alert('清除失败')}},
+  scrollChat(){const el=this.$refs.chatMsgs;if(el)el.scrollTop=el.scrollHeight},
+  syncParticleOpacity(){const c=document.getElementById('particles');if(c)c.style.opacity=this.themeLight?'.12':'.3'},
+  toggleTheme(){this.themeLight=!this.themeLight;try{localStorage.setItem('envMonitorThemeLight',this.themeLight?'1':'0');}catch(e){}document.documentElement.classList.toggle('theme-light',this.themeLight);this.syncParticleOpacity();this.redrawChartsForTheme();},
+  redrawChartsForTheme(){const p=this.page;this.$nextTick(async()=>{if(p==='dashboard'){this.destroyDashboardCharts();await this.refresh();}else if(p==='bigscreen'){this.destroyBigScreenCharts();await this.loadCurrent();await this.loadOverview();this.renderBigScreen();}else if(p==='compare'){this.destroyCompareCharts();await this.renderCompare();}else if(p==='history'){this.destroyHistoryCharts();await this.loadHistory();}else if(p==='report'){await this.loadHistory();this.destroyReportCharts();this.renderReport();}this.rzAll();});},
+  aqiColor(v){if(!v)return this.themeLight?'#94a3b8':'#5d8aaa';if(v<=50)return'#00e676';if(v<=100)return'#c6e800';if(v<=150)return'#ff8c42';if(v<=200)return'#ff5252';if(v<=300)return'#ce93d8';return'#ff8a80'},
+  aqiLvl(v){if(!v)return'';if(v<=50)return'优';if(v<=100)return'良';if(v<=150)return'轻度污染';if(v<=200)return'中度污染';if(v<=300)return'重度污染';return'严重污染'},
+  aqiAdvice(v){if(!v)return'数据加载中...';if(v<=50)return'空气优良，非常适合户外活动 🏃';if(v<=100)return'空气良好，可以正常外出活动 👍';if(v<=150)return'轻度污染，敏感人群减少户外活动 😷';if(v<=200)return'中度污染，建议减少外出，佩戴口罩 🚫';return'重度/严重污染，避免一切户外活动 🆘'},
+  ecMuted(){const L=this.themeLight;return{lab:L?'#64748b':'#5d8aaa',line:L?'#cbd5e1':'#1b3050',split:L?'#e2e8f0':'#1b3050',pieBd:L?'#ffffff':'#132031',barBg:L?'rgba(37,99,235,.08)':'rgba(27,48,80,.3)'}},
+  ic(id){const el=document.getElementById(id);if(!el)return null;return echarts.getInstanceByDom(el)||echarts.init(el,this.themeLight?undefined:'dark')},
+  base(){const L=this.themeLight;return{backgroundColor:'transparent',animation:true,tooltip:{trigger:'axis',backgroundColor:L?'#ffffff':'#132031',borderColor:L?'#e2e8f0':'#1b3050',textStyle:{color:L?'#334155':'#cfe3f5'}}}},
+  renderGauge(){const m=this.ecMuted(),c=this.gc||(this.gc=this.ic('gaugeChart'));if(!c)return;const v=this.current.aqi||0;c.setOption({...this.base(),series:[{type:'gauge',radius:'94%',startAngle:200,endAngle:-20,min:0,max:300,axisLine:{lineStyle:{width:22,color:[[.167,'#00e676'],[.333,'#c6e800'],[.5,'#ff8c42'],[.667,'#ff5252'],[1,'#ce93d8']]}},pointer:{itemStyle:{color:'auto'},length:'66%',width:5},axisTick:{show:false},splitLine:{show:false},axisLabel:{show:false},detail:{formatter:'{value}',fontSize:32,fontWeight:'bold',color:this.aqiColor(v),offsetCenter:[0,'60%']},title:{offsetCenter:[0,'84%'],color:m.lab,fontSize:12},data:[{value:v,name:this.current.aqiLevel||''}]}]})},
+  renderTrend(data){const m=this.ecMuted(),c=this.tc||(this.tc=this.ic('trendChart'));if(!c||!data.length)return;c.setOption({...this.base(),legend:{data:['AQI','PM2.5'],top:0,textStyle:{color:m.lab},itemWidth:10},grid:{top:26,left:8,right:8,bottom:16,containLabel:true},xAxis:{type:'category',data:data.map(d=>d.time),axisLabel:{color:m.lab,interval:Math.floor(data.length/6),fontSize:10},axisLine:{lineStyle:{color:m.line}}},yAxis:{type:'value',axisLabel:{color:m.lab,fontSize:10},splitLine:{lineStyle:{color:m.split}}},series:[{name:'AQI',type:'line',smooth:true,data:data.map(d=>d.aqi),lineStyle:{color:'#00f0c0',width:2.5},areaStyle:{color:{type:'linear',x:0,y:0,x2:0,y2:1,colorStops:[{offset:0,color:'rgba(0,240,192,.2)'},{offset:1,color:'rgba(0,240,192,0)'}]}},symbol:'none'},{name:'PM2.5',type:'line',smooth:true,data:data.map(d=>d.pm25),lineStyle:{color:'#00bcd4',width:2},symbol:'none'}]})},
+  renderRadar(){const m=this.ecMuted(),c=this.rc||(this.rc=this.ic('radarChart'));if(!c||!this.current.aqi)return;const d=this.current;c.setOption({...this.base(),radar:{indicator:[{name:'AQI',max:300},{name:'PM2.5',max:150},{name:'PM10',max:250},{name:'CO',max:5},{name:'湿度',max:100}],center:['50%','54%'],radius:'68%',axisName:{color:m.lab,fontSize:10},splitLine:{lineStyle:{color:m.line}},axisLine:{lineStyle:{color:m.line}}},series:[{type:'radar',data:[{value:[d.aqi||0,d.pm25||0,d.pm10||0,d.co||0,d.humidity||0],areaStyle:{color:'rgba(0,240,192,.12)'},lineStyle:{color:'#00f0c0',width:2},itemStyle:{color:'#00f0c0'}}]}]})},
+  renderBar(){const m=this.ecMuted(),c=this.sbc||(this.sbc=this.ic('stationBar'));if(!c||!this.overview.length)return;const names=this.overview.map(s=>s.stationName.replace('监测站',''));const aqis=this.overview.map(s=>s.aqi);c.setOption({...this.base(),grid:{top:8,left:8,right:8,bottom:16,containLabel:true},xAxis:{type:'category',data:names,axisLabel:{color:m.lab,fontSize:10}},yAxis:{type:'value',max:300,axisLabel:{color:m.lab,fontSize:10},splitLine:{lineStyle:{color:m.split}}},series:[{type:'bar',data:aqis.map(v=>({value:v,itemStyle:{color:this.aqiColor(v),borderRadius:[5,5,0,0]}})),barMaxWidth:40,showBackground:true,backgroundStyle:{color:m.barBg,borderRadius:[4,4,0,0]},label:{show:true,position:'top',color:m.lab,fontSize:10}}]})},
+  renderPie(){const m=this.ecMuted(),c=this.pic||(this.pic=this.ic('pieChart'));if(!c||!this.overview.length)return;const cnt={};this.overview.forEach(s=>{cnt[s.aqiLevel]=(cnt[s.aqiLevel]||0)+1});const clrs={'优':'#00e676','良':'#c6e800','轻度污染':'#ff8c42','中度污染':'#ff5252','重度污染':'#ce93d8','严重污染':'#ff8a80'};c.setOption({...this.base(),legend:{show:false},series:[{type:'pie',radius:['42%','70%'],center:['50%','54%'],data:Object.entries(cnt).map(([k,v])=>({name:k,value:v,itemStyle:{color:clrs[k]||'#888'}})),label:{color:m.lab,fontSize:10},itemStyle:{borderColor:m.pieBd,borderWidth:2}}]})},
+  renderTempHum(data){const m=this.ecMuted(),c=this.thc||(this.thc=this.ic('tempHumChart'));if(!c||!data.length)return;c.setOption({...this.base(),legend:{data:['温度℃','湿度%'],top:0,textStyle:{color:m.lab},itemWidth:10},grid:{top:26,left:8,right:38,bottom:16,containLabel:true},xAxis:{type:'category',data:data.map(d=>d.time),axisLabel:{color:m.lab,interval:Math.floor(data.length/5),fontSize:10},axisLine:{lineStyle:{color:m.line}}},yAxis:[{type:'value',name:'℃',nameTextStyle:{color:m.lab,fontSize:10},axisLabel:{color:m.lab,fontSize:10},splitLine:{lineStyle:{color:m.split}}},{type:'value',name:'%',nameTextStyle:{color:m.lab,fontSize:10},axisLabel:{color:m.lab,fontSize:10},splitLine:{show:false}}],series:[{name:'温度℃',type:'line',smooth:true,data:data.map(d=>d.temperature),lineStyle:{color:'#ff7043',width:2.5},areaStyle:{color:{type:'linear',x:0,y:0,x2:0,y2:1,colorStops:[{offset:0,color:'rgba(255,112,67,.18)'},{offset:1,color:'rgba(255,112,67,0)'}]}},symbol:'none',yAxisIndex:0},{name:'湿度%',type:'line',smooth:true,data:data.map(d=>d.humidity),lineStyle:{color:'#42a5f5',width:2},symbol:'none',yAxisIndex:1}]})},
+  renderHistAqi(data){const m=this.ecMuted(),c=this.haqi||(this.haqi=this.ic('histAqi'));if(!c)return;c.setOption({...this.base(),legend:{data:['AQI','PM2.5','PM10'],top:0,textStyle:{color:m.lab},itemWidth:10},grid:{top:26,left:8,right:8,bottom:16,containLabel:true},xAxis:{type:'category',data:data.map(d=>d.time),axisLabel:{color:m.lab,interval:Math.floor(data.length/8),fontSize:10},axisLine:{lineStyle:{color:m.line}}},yAxis:{type:'value',axisLabel:{color:m.lab,fontSize:10},splitLine:{lineStyle:{color:m.split}}},series:[{name:'AQI',type:'line',smooth:true,data:data.map(d=>d.aqi),lineStyle:{color:'#00f0c0',width:2.5},areaStyle:{color:'rgba(0,240,192,.08)'},symbol:'none'},{name:'PM2.5',type:'line',smooth:true,data:data.map(d=>d.pm25),lineStyle:{color:'#00bcd4',width:2},symbol:'none'},{name:'PM10',type:'line',smooth:true,data:data.map(d=>d.pm10),lineStyle:{color:'#ab47bc',width:2},symbol:'none'}]})},
+  renderHistTemp(data){const m=this.ecMuted(),c=this.htemp||(this.htemp=this.ic('histTemp'));if(!c)return;c.setOption({...this.base(),grid:{top:8,left:8,right:8,bottom:16,containLabel:true},xAxis:{type:'category',data:data.map(d=>d.time),axisLabel:{color:m.lab,interval:Math.floor(data.length/5),fontSize:10},axisLine:{lineStyle:{color:m.line}}},yAxis:{type:'value',name:'℃',axisLabel:{color:m.lab,fontSize:10},splitLine:{lineStyle:{color:m.split}}},series:[{type:'line',smooth:true,data:data.map(d=>d.temperature),lineStyle:{color:'#ff7043',width:2.5},areaStyle:{color:{type:'linear',x:0,y:0,x2:0,y2:1,colorStops:[{offset:0,color:'rgba(255,112,67,.2)'},{offset:1,color:'rgba(255,112,67,0)'}]}},symbol:'none'}]})},
+  renderHistHum(data){const m=this.ecMuted(),c=this.hhum||(this.hhum=this.ic('histHum'));if(!c)return;c.setOption({...this.base(),grid:{top:8,left:8,right:8,bottom:16,containLabel:true},xAxis:{type:'category',data:data.map(d=>d.time),axisLabel:{color:m.lab,interval:Math.floor(data.length/5),fontSize:10},axisLine:{lineStyle:{color:m.line}}},yAxis:{type:'value',name:'%',max:100,axisLabel:{color:m.lab,fontSize:10},splitLine:{lineStyle:{color:m.split}}},series:[{type:'line',smooth:true,data:data.map(d=>d.humidity),lineStyle:{color:'#42a5f5',width:2.5},areaStyle:{color:{type:'linear',x:0,y:0,x2:0,y2:1,colorStops:[{offset:0,color:'rgba(66,165,245,.2)'},{offset:1,color:'rgba(66,165,245,0)'}]}},symbol:'none'}]})},
+  renderBigScreen(){
+    const m=this.ecMuted(),d=this.current,v=d.aqi||0;
+    const c1=this.bsGc||(this.bsGc=this.ic('bsGauge'));if(c1)c1.setOption({backgroundColor:'transparent',series:[{type:'gauge',radius:'94%',startAngle:200,endAngle:-20,min:0,max:300,axisLine:{lineStyle:{width:22,color:[[.167,'#00e676'],[.333,'#c6e800'],[.5,'#ff8c42'],[.667,'#ff5252'],[1,'#ce93d8']]}},pointer:{itemStyle:{color:'auto'},length:'66%',width:5},axisTick:{show:false},splitLine:{show:false},axisLabel:{show:false},detail:{formatter:'{value}',fontSize:32,fontWeight:'bold',color:this.aqiColor(v),offsetCenter:[0,'60%']},title:{offsetCenter:[0,'84%'],color:m.lab,fontSize:12},data:[{value:v,name:d.aqiLevel||''}]}]});
+    axios.get(`/api/stations/${this.selectedStation}/trend?hours=24`).then(r=>{const data=r.data,M=this.ecMuted(),c=this.bsTc||(this.bsTc=this.ic('bsTrend'));if(c)c.setOption({...this.base(),grid:{top:20,left:8,right:8,bottom:16,containLabel:true},xAxis:{type:'category',data:data.map(x=>x.time),axisLabel:{color:M.lab,interval:Math.floor(data.length/8),fontSize:10},axisLine:{lineStyle:{color:M.line}}},yAxis:{type:'value',axisLabel:{color:M.lab,fontSize:10},splitLine:{lineStyle:{color:M.split}}},series:[{type:'line',smooth:true,data:data.map(x=>x.aqi),lineStyle:{color:'#00f0c0',width:3},areaStyle:{color:'rgba(0,240,192,.1)'},symbol:'none'}]})});
+    const c3=this.bsRc||(this.bsRc=this.ic('bsRadar'));if(c3)c3.setOption({...this.base(),radar:{indicator:[{name:'AQI',max:300},{name:'PM2.5',max:150},{name:'PM10',max:250},{name:'CO',max:5},{name:'湿度',max:100}],center:['50%','54%'],radius:'68%',axisName:{color:m.lab,fontSize:10},splitLine:{lineStyle:{color:m.line}},axisLine:{lineStyle:{color:m.line}}},series:[{type:'radar',data:[{value:[d.aqi||0,d.pm25||0,d.pm10||0,d.co||0,d.humidity||0],areaStyle:{color:'rgba(0,240,192,.12)'},lineStyle:{color:'#00f0c0',width:2},itemStyle:{color:'#00f0c0'}}]}]});
+    if(this.overview.length){const c4=this.bsBc||(this.bsBc=this.ic('bsBar'));if(c4)c4.setOption({...this.base(),grid:{top:8,left:8,right:8,bottom:16,containLabel:true},xAxis:{type:'category',data:this.overview.map(s=>s.stationName.replace('监测站','')),axisLabel:{color:m.lab,fontSize:10}},yAxis:{type:'value',max:300,axisLabel:{color:m.lab,fontSize:10},splitLine:{lineStyle:{color:m.split}}},series:[{type:'bar',data:this.overview.map(s=>({value:s.aqi,itemStyle:{color:this.aqiColor(s.aqi),borderRadius:[4,4,0,0]}})),barMaxWidth:40}]})}
+    if(this.overview.length){const cnt={};this.overview.forEach(s=>{cnt[s.aqiLevel]=(cnt[s.aqiLevel]||0)+1});const clrs={'优':'#00e676','良':'#c6e800','轻度污染':'#ff8c42','中度污染':'#ff5252','重度污染':'#ce93d8','严重污染':'#ff8a80'};const c5=this.bsPic||(this.bsPic=this.ic('bsPie'));if(c5)c5.setOption({...this.base(),legend:{show:false},series:[{type:'pie',radius:['42%','70%'],center:['50%','54%'],data:Object.entries(cnt).map(([k,v])=>({name:k,value:v,itemStyle:{color:clrs[k]||'#888'}})),label:{color:m.lab,fontSize:10},itemStyle:{borderColor:m.pieBd,borderWidth:2}}]})}
+  },
+  async renderCompare(){
+    await this.loadAllTrends();
+    const vals=Object.values(this.allTrends);if(!vals.length)return;
+    const m=this.ecMuted(),colors=['#00f0c0','#00aaff','#ff7043','#ab47bc','#ffa726'];
+    const mkSeries=(field)=>vals.map((t,i)=>({name:t.name.replace('监测站',''),type:'line',smooth:true,data:t.data.map(d=>d[field]),lineStyle:{color:colors[i],width:2},symbol:'none'}));
+    const xData=vals[0].data.map(d=>d.time);
+    const base={...this.base(),legend:{top:0,textStyle:{color:m.lab},itemWidth:10},grid:{top:28,left:8,right:8,bottom:16,containLabel:true},xAxis:{type:'category',data:xData,axisLabel:{color:m.lab,interval:Math.floor(xData.length/6),fontSize:10},axisLine:{lineStyle:{color:m.line}}},yAxis:{type:'value',axisLabel:{color:m.lab,fontSize:10},splitLine:{lineStyle:{color:m.split}}}};
+    const c1=this.cmpAqi||(this.cmpAqi=this.ic('compareAqi'));if(c1)c1.setOption({...base,legend:{...base.legend,data:vals.map(t=>t.name.replace('监测站',''))},series:mkSeries('aqi')});
+    const c2=this.cmpPm||(this.cmpPm=this.ic('comparePm25'));if(c2)c2.setOption({...base,legend:{...base.legend,data:vals.map(t=>t.name.replace('监测站',''))},series:mkSeries('pm25')});
+    const c3=this.cmpTemp||(this.cmpTemp=this.ic('compareTemp'));if(c3)c3.setOption({...base,legend:{...base.legend,data:vals.map(t=>t.name.replace('监测站',''))},series:mkSeries('temperature')});
+    const c4=this.cmpCo||(this.cmpCo=this.ic('compareCo2'));if(c4)c4.setOption({...base,legend:{...base.legend,data:vals.map(t=>t.name.replace('监测站',''))},series:mkSeries('co')});
+    const c5=this.cmpHum||(this.cmpHum=this.ic('compareHum'));if(c5)c5.setOption({...base,legend:{...base.legend,data:vals.map(t=>t.name.replace('监测站',''))},series:mkSeries('humidity')});
+  },
+  renderReport(){
+    const data=this.historyData;if(!data.length)return;
+    const m=this.ecMuted();
+    const c1=this.rTrend||(this.rTrend=this.ic('reportTrend'));if(c1)c1.setOption({...this.base(),grid:{top:8,left:8,right:8,bottom:16,containLabel:true},xAxis:{type:'category',data:data.map(d=>d.time),axisLabel:{color:m.lab,interval:Math.floor(data.length/6),fontSize:10},axisLine:{lineStyle:{color:m.line}}},yAxis:{type:'value',axisLabel:{color:m.lab,fontSize:10},splitLine:{lineStyle:{color:m.split}}},series:[{type:'line',smooth:true,data:data.map(d=>d.aqi),lineStyle:{color:'#00f0c0',width:2.5},areaStyle:{color:'rgba(0,240,192,.08)'},symbol:'none'}]});
+    if(this.overview.length){const c2=this.rRadar||(this.rRadar=this.ic('reportRadar'));if(c2)c2.setOption({...this.base(),radar:{indicator:this.overview.map(s=>({name:s.stationName.replace('监测站',''),max:300})),center:['50%','54%'],radius:'70%',axisName:{color:m.lab,fontSize:10},splitLine:{lineStyle:{color:m.line}},axisLine:{lineStyle:{color:m.line}}},series:[{type:'radar',data:[{value:this.overview.map(s=>s.aqi),name:'AQI',areaStyle:{color:'rgba(0,240,192,.12)'},lineStyle:{color:'#00f0c0',width:2},itemStyle:{color:'#00f0c0'}}]}]})};
+  },
+  // ── 人员管理 ──
+  async loadUsers(){const r=await axios.get('/api/users'+(this.userKeyword?`?keyword=${this.userKeyword}`:''));this.users=r.data},
+  filterUsers(){this.loadUsers()},
+  openUserForm(u=null){
+    this.userForm=u?{...u}:{id:null,name:'',role:'成员',phone:'',email:'',status:'正常',remark:'',username:'',password:''};
+    this.userModal=true;
+  },
+  async saveUser(){
+    if(!this.userForm.name.trim()){alert('姓名不能为空');return}
+    if(this.userForm.id){await axios.put(`/api/users/${this.userForm.id}`,this.userForm)}
+    else{await axios.post('/api/users',this.userForm)}
+    this.userModal=false;this.loadUsers();
+  },
+  async deleteUser(id){
+    if(!confirm('确认删除该人员？'))return;
+    await axios.delete(`/api/users/${id}`);this.loadUsers();
+  },
+  // ── 指标管理 ──
+  async loadRules(){const r=await axios.get('/api/alert-rules');this.rules=r.data},
+  openRuleForm(r=null){
+    this.ruleForm=r?{...r}:{id:null,metricName:'AQI',operator:'>',threshold:100,level:'警告',enabled:true,description:''};
+    this.ruleModal=true;
+  },
+  async saveRule(){
+    if(!this.currentUser.user.isAdmin){alert('无权操作，需要管理员权限');return}
+    if(this.ruleForm.id){await axios.put(`/api/alert-rules/${this.ruleForm.id}`,this.ruleForm)}
+    else{await axios.post('/api/alert-rules',this.ruleForm)}
+    this.ruleModal=false;this.loadRules();
+  },
+  async deleteRule(id){
+    if(!this.currentUser.user.isAdmin){alert('无权操作，需要管理员权限');return}
+    if(!confirm('确认删除该告警规则？'))return;
+    await axios.delete(`/api/alert-rules/${id}`);this.loadRules();
+  },
+  async toggleRule(r){
+    if(!this.currentUser.user.isAdmin){alert('无权操作，需要管理员权限');return}
+    await axios.patch(`/api/alert-rules/${r.id}/toggle`);this.loadRules()
+  },
+  // ── 站点管理 ──
+  async loadStationList(){const r=await axios.get('/api/stations');this.stationList=r.data},
+  stationAqi(id){const s=this.overview.find(o=>o.stationId==id);return s?s.aqi:null},
+  stationPm25(id){const s=this.overview.find(o=>o.stationId==id);return s?s.pm25:null},
+  stationTemp(id){const s=this.overview.find(o=>o.stationId==id);return s?s.temperature:null},
+  openStationForm(s=null){
+    this.stationForm=s?{...s}:{id:null,name:'',location:'',lat:null,lng:null,status:'ONLINE'};
+    this.stationModal=true;
+  },
+  async saveStation(){
+    if(!this.currentUser.user.isAdmin){alert('无权操作，需要管理员权限');return}
+    if(!this.stationForm.name.trim()){alert('站点名称不能为空');return}
+    if(this.stationForm.id){await axios.put(`/api/stations/${this.stationForm.id}`,this.stationForm)}
+    else{await axios.post('/api/stations',this.stationForm)}
+    this.stationModal=false;this.loadStationList();this.loadOverview();
+  },
+  async deleteStation(id){
+    if(!this.currentUser.user.isAdmin){alert('无权操作，需要管理员权限');return}
+    if(!confirm('确认删除该站点？相关历史数据将同步清除！'))return;
+    await axios.delete(`/api/stations/${id}`);this.loadStationList();this.loadOverview();
+  },
+  destroyDashboardCharts(){[this.gc,this.tc,this.rc,this.sbc,this.thc,this.pic].forEach(c=>{if(c){c.dispose()}});this.gc=null;this.tc=null;this.rc=null;this.sbc=null;this.thc=null;this.pic=null},
+  destroyBigScreenCharts(){[this.bsGc,this.bsTc,this.bsRc,this.bsBc,this.bsPic].forEach(c=>{if(c){c.dispose()}});this.bsGc=null;this.bsTc=null;this.bsRc=null;this.bsBc=null;this.bsPic=null},
+  destroyCompareCharts(){[this.cmpAqi,this.cmpPm,this.cmpTemp,this.cmpCo,this.cmpHum].forEach(c=>{if(c){c.dispose()}});this.cmpAqi=null;this.cmpPm=null;this.cmpTemp=null;this.cmpCo=null;this.cmpHum=null},
+  destroyHistoryCharts(){[this.haqi,this.htemp,this.hhum].forEach(c=>{if(c){c.dispose()}});this.haqi=null;this.htemp=null;this.hhum=null},
+  destroyReportCharts(){[this.rTrend,this.rRadar].forEach(c=>{if(c){c.dispose()}});this.rTrend=null;this.rRadar=null},
+  rzAll(){const charts=[this.gc,this.tc,this.rc,this.sbc,this.thc,this.pic,this.bsGc,this.bsTc,this.bsRc,this.bsBc,this.bsPic,this.cmpAqi,this.cmpPm,this.cmpTemp,this.cmpCo,this.cmpHum,this.haqi,this.htemp,this.hhum,this.rTrend,this.rRadar];charts.forEach(c=>{if(c&&c.resize)c.resize()})}
+}
+}).use(ElementPlus).mount('#app');
+// 隐藏加载蒙版
+const ld=document.getElementById('loading');if(ld)ld.style.display='none';
+</script>
+</body>
+</html>

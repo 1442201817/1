@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>诊断</title>
+<link rel="stylesheet" href="/lib/element-plus.css"/>
+</head>
+<body style="background:#111;color:#fff;padding:20px;font-family:sans-serif">
+<h2>库加载诊断</h2>
+<div id="result"></div>
+<div id="app" style="margin-top:20px">
+  <el-button type="primary" @click="test">点我测试Element Plus</el-button>
+  <p>{{msg}}</p>
+</div>
+<script src="/lib/vue.min.js"></script>
+<script src="/lib/element-plus.js"></script>
+<script src="/lib/echarts.min.js"></script>
+<script src="/lib/axios.min.js"></script>
+<script>
+const r = document.getElementById('result');
+const checks = [
+  ['Vue', typeof Vue !== 'undefined' && typeof Vue.createApp === 'function'],
+  ['Vue.createApp', typeof Vue !== 'undefined' && typeof Vue.createApp === 'function'],
+  ['ElementPlus', typeof ElementPlus !== 'undefined'],
+  ['ElementPlus.install', typeof ElementPlus !== 'undefined' && typeof ElementPlus.install === 'function'],
+  ['echarts', typeof echarts !== 'undefined'],
+  ['axios', typeof axios !== 'undefined'],
+];
+checks.forEach(([name, ok]) => {
+  r.innerHTML += `<div style="padding:4px 0;color:${ok?'#00e676':'#ff5252'}">${ok?'✅':'❌'} ${name}</div>`;
+});
+
+// Try mounting Vue app
+try {
+  const {createApp} = Vue;
+  createApp({
+    data(){return{msg:'Vue 挂载成功！'}},
+    methods:{test(){this.msg='Element Plus 也正常！'}}
+  }).use(ElementPlus).mount('#app');
+  r.innerHTML += '<div style="color:#00e676;margin-top:8px">✅ Vue App 挂载成功</div>';
+} catch(e) {
+  r.innerHTML += `<div style="color:#ff5252;margin-top:8px">❌ 挂载失败: ${e.message}</div>`;
+}
+
+// Test API
+axios.get('/api/overview').then(r2=>{
+  r.innerHTML += `<div style="color:#00e676">✅ API /api/overview 返回 ${r2.data.length} 条</div>`;
+}).catch(e=>{
+  r.innerHTML += `<div style="color:#ff5252">❌ API 失败: ${e.message}</div>`;
+});
+</script>
+</body>
+</html>
